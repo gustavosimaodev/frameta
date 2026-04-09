@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frameta — EXIF Watermark</title>
+<script src="https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/full.umd.cjs"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f0f0f;
+    --surface: #1a1a1a;
+    --surface2: #222;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #a78bfa;
+    --accent2: #7c3aed;
+  }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+  header { padding: 18px 32px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .logo { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .logo-sub { font-size: 12px; color: var(--muted); margin-left: 4px; }
+
+  .container { display: flex; height: calc(100vh - 57px); }
+
+  /* SIDEBAR */
+  .sidebar { width: 240px; min-width: 240px; border-right: 1px solid var(--border); padding: 20px 16px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+  .s-title { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 8px; }
+  .btn-upload { width: 100%; padding: 10px; background: var(--accent2); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+  .btn-upload:hover { opacity: 0.85; }
+
+  .style-opts { display: flex; flex-direction: column; gap: 6px; }
+  .style-btn { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); font-size: 12px; cursor: pointer; transition: all 0.15s; text-align: left; }
+  .style-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(167,139,250,0.08); }
+
+  .pos-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .pos-btn { aspect-ratio: 1; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--muted); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .pos-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(167,139,250,0.08); }
+
+  .format-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .fmt-btn { padding: 7px 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--muted); font-size: 11px; cursor: pointer; text-align: center; transition: all 0.15s; line-height: 1.4; }
+  .fmt-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(167,139,250,0.08); }
+
+  .toggles { display: flex; flex-direction: column; gap: 8px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; }
+  .toggle-label { font-size: 12px; color: var(--muted); }
+  .toggle-wrap { position: relative; width: 32px; height: 18px; }
+  .toggle-wrap input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background: #333; border-radius: 18px; transition: 0.2s; }
+  .slider::before { content: ''; position: absolute; height: 12px; width: 12px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.2s; }
+  input:checked + .slider { background: var(--accent2); }
+  input:checked + .slider::before { transform: translateX(14px); }
+
+  .font-row { display: flex; gap: 6px; }
+  .font-btn { flex: 1; padding: 6px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--muted); font-size: 11px; cursor: pointer; text-align: center; }
+  .font-btn.active { border-color: var(--accent); color: var(--accent); }
+
+  .btn-export { width: 100%; padding: 11px; background: linear-gradient(135deg, var(--accent2), #6d28d9); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-top: auto; transition: opacity 0.15s; }
+  .btn-export:hover { opacity: 0.9; }
+  .btn-export:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* MAIN */
+  .main { flex: 1; display: flex; flex-direction: column; }
+  .preview-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; overflow: hidden; position: relative; }
+  .drop-zone { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border); border-radius: 16px; gap: 12px; cursor: pointer; transition: border-color 0.2s; }
+  .drop-zone:hover, .drop-zone.drag { border-color: var(--accent); }
+  .drop-icon { font-size: 40px; opacity: 0.3; }
+  .drop-text { color: var(--muted); font-size: 14px; }
+  .drop-sub { color: #555; font-size: 12px; }
+  #previewCanvas { max-width: 100%; max-height: 100%; border-radius: 8px; display: none; box-shadow: 0 8px 40px rgba(0,0,0,0.6); }
+
+  /* EXIF PANEL */
+  .exif-panel { width: 200px; min-width: 200px; border-left: 1px solid var(--border); padding: 20px 14px; overflow-y: auto; }
+  .exif-item { margin-bottom: 14px; }
+  .exif-key { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 3px; }
+  .exif-val { font-size: 13px; font-weight: 500; color: var(--text); word-break: break-word; }
+  .exif-empty { color: #444; font-size: 12px; line-height: 1.6; }
+
+  #hiddenInput { display: none; }
+
+  @media (max-width: 768px) {
+    .container { flex-direction: column; height: auto; }
+    .sidebar, .exif-panel { width: 100%; min-width: unset; border: none; border-bottom: 1px solid var(--border); }
+    .exif-panel { border-bottom: none; border-top: 1px solid var(--border); }
+    .main { min-height: 50vh; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">frame<span>ta</span></div>
+  <div class="logo-sub">EXIF watermark</div>
+</header>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div>
+      <button class="btn-upload" onclick="document.getElementById('hiddenInput').click()">+ Abrir foto</button>
+      <input type="file" id="hiddenInput" accept="image/*">
+    </div>
+
+    <div>
+      <div class="s-title">Estilo da barra</div>
+      <div class="style-opts">
+        <button class="style-btn active" data-style="white" onclick="setStyle(this)">Fundo branco</button>
+        <button class="style-btn" data-style="dark" onclick="setStyle(this)">Fundo escuro</button>
+        <button class="style-btn" data-style="glass" onclick="setStyle(this)">Transparente</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="s-title">Posição</div>
+      <div class="pos-grid">
+        <button class="pos-btn" data-pos="tl" onclick="setPos(this)" title="Topo esquerdo">↖</button>
+        <button class="pos-btn" data-pos="tc" onclick="setPos(this)" title="Topo centro">↑</button>
+        <button class="pos-btn" data-pos="tr" onclick="setPos(this)" title="Topo direito">↗</button>
+        <button class="pos-btn" data-pos="ml" onclick="setPos(this)">←</button>
+        <button class="pos-btn" data-pos="mc" onclick="setPos(this)">•</button>
+        <button class="pos-btn" data-pos="mr" onclick="setPos(this)">→</button>
+        <button class="pos-btn active" data-pos="bl" onclick="setPos(this)" title="Base esquerdo">↙</button>
+        <button class="pos-btn" data-pos="bc" onclick="setPos(this)" title="Base centro">↓</button>
+        <button class="pos-btn" data-pos="br" onclick="setPos(this)" title="Base direito">↘</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="s-title">Formato de exportação</div>
+      <div class="format-grid">
+        <button class="fmt-btn active" data-fmt="original" onclick="setFmt(this)">Original</button>
+        <button class="fmt-btn" data-fmt="1:1" onclick="setFmt(this)">1:1<br><span style="font-size:10px;opacity:0.6">Feed</span></button>
+        <button class="fmt-btn" data-fmt="4:5" onclick="setFmt(this)">4:5<br><span style="font-size:10px;opacity:0.6">Portrait</span></button>
+        <button class="fmt-btn" data-fmt="9:16" onclick="setFmt(this)">9:16<br><span style="font-size:10px;opacity:0.6">Story</span></button>
+        <button class="fmt-btn" data-fmt="16:9" onclick="setFmt(this)">16:9<br><span style="font-size:10px;opacity:0.6">YouTube</span></button>
+        <button class="fmt-btn" data-fmt="1.91:1" onclick="setFmt(this)">1.91:1<br><span style="font-size:10px;opacity:0.6">Twitter</span></button>
+      </div>
+    </div>
+
+    <div>
+      <div class="s-title">Campos visíveis</div>
+      <div class="toggles">
+        <div class="toggle-row"><span class="toggle-label">Câmera</span><label class="toggle-wrap"><input type="checkbox" id="tog-camera" checked onchange="render()"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Lente</span><label class="toggle-wrap"><input type="checkbox" id="tog-lens" checked onchange="render()"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Velocidade</span><label class="toggle-wrap"><input type="checkbox" id="tog-shutter" checked onchange="render()"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Abertura</span><label class="toggle-wrap"><input type="checkbox" id="tog-aperture" checked onchange="render()"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">ISO</span><label class="toggle-wrap"><input type="checkbox" id="tog-iso" checked onchange="render()"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Focal</span><label class="toggle-wrap"><input type="checkbox" id="tog-focal" checked onchange="render()"><span class="slider"></span></label></div>
+        <div class="toggle-row"><span class="toggle-label">Data</span><label class="toggle-wrap"><input type="checkbox" id="tog-date" onchange="render()"><span class="slider"></span></label></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="s-title">Fonte</div>
+      <div class="font-row">
+        <button class="font-btn active" data-font="sans" onclick="setFont(this)" style="font-family:sans-serif">Sans</button>
+        <button class="font-btn" data-font="mono" onclick="setFont(this)" style="font-family:monospace">Mono</button>
+        <button class="font-btn" data-font="serif" onclick="setFont(this)" style="font-family:serif">Serif</button>
+      </div>
+    </div>
+
+    <button class="btn-export" id="btnExport" disabled onclick="exportImage()">Baixar foto</button>
+  </div>
+
+  <!-- MAIN PREVIEW -->
+  <div class="main">
+    <div class="preview-wrap" id="dropZoneWrap">
+      <div class="drop-zone" id="dropZone" onclick="document.getElementById('hiddenInput').click()">
+        <div class="drop-icon">📷</div>
+        <div class="drop-text">Arraste ou clique para abrir</div>
+        <div class="drop-sub">JPEG, PNG, HEIC, TIFF, RAW</div>
+      </div>
+      <canvas id="previewCanvas"></canvas>
+    </div>
+  </div>
+
+  <!-- EXIF PANEL -->
+  <div class="exif-panel" id="exifPanel">
+    <div class="s-title" style="margin-bottom:14px">Dados EXIF</div>
+    <div class="exif-empty" id="exifEmpty">Carregue uma foto para ver os metadados detectados.</div>
+  </div>
+
+</div>
+
+<script>
+  const state = {
+    img: null,
+    exif: {},
+    style: 'white',
+    pos: 'bl',
+    fmt: 'original',
+    font: 'sans'
+  };
+
+  const fontMap = { sans: 'Arial, Helvetica, sans-serif', mono: "'Courier New', monospace", serif: 'Georgia, serif' };
+
+  // File input
+  document.getElementById('hiddenInput').addEventListener('change', e => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+  });
+
+  // Drag and drop
+  const dz = document.getElementById('dropZone');
+  const wrap = document.getElementById('dropZoneWrap');
+  wrap.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+  wrap.addEventListener('dragleave', () => dz.classList.remove('drag'));
+  wrap.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) loadFile(f);
+  });
+
+  async function loadFile(file) {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = async () => {
+      state.img = img;
+      try {
+        const raw = await exifr.parse(file, { tiff: true, exif: true, gps: false, interop: false, translateValues: true });
+        state.exif = raw || {};
+      } catch(e) { state.exif = {}; }
+      showExif();
+      render();
+      document.getElementById('btnExport').disabled = false;
+    };
+    img.src = url;
+  }
+
+  function showExif() {
+    const e = state.exif;
+    const panel = document.getElementById('exifPanel');
+    document.getElementById('exifEmpty').style.display = 'none';
+
+    const fields = [
+      ['Câmera', buildCamera(e)],
+      ['Lente', e.LensModel || e.Lens || null],
+      ['Velocidade', formatShutter(e.ExposureTime)],
+      ['Abertura', e.FNumber ? 'f/' + e.FNumber : null],
+      ['ISO', e.ISO || e.ISOSpeedRatings || null],
+      ['Focal', e.FocalLength ? e.FocalLength + 'mm' : null],
+      ['Focal (equiv.)', e.FocalLengthIn35mmFormat ? e.FocalLengthIn35mmFormat + 'mm' : null],
+      ['Exposição', e.ExposureBiasValue != null ? (e.ExposureBiasValue > 0 ? '+' : '') + e.ExposureBiasValue + ' EV' : null],
+      ['Modo', e.ExposureProgram || null],
+      ['Flash', e.Flash || null],
+      ['Software', e.Software || null],
+      ['Data', formatDate(e.DateTimeOriginal || e.DateTime)],
+    ];
+
+    // clear old items
+    panel.querySelectorAll('.exif-item').forEach(el => el.remove());
+    fields.forEach(([key, val]) => {
+      if (!val) return;
+      const d = document.createElement('div');
+      d.className = 'exif-item';
+      d.innerHTML = `<div class="exif-key">${key}</div><div class="exif-val">${val}</div>`;
+      panel.appendChild(d);
+    });
+  }
+
+  function buildCamera(e) {
+    const make = e.Make || '';
+    const model = e.Model || '';
+    if (!make && !model) return null;
+    if (model.toLowerCase().startsWith(make.toLowerCase())) return model;
+    return (make + ' ' + model).trim();
+  }
+
+  function formatShutter(v) {
+    if (!v) return null;
+    if (v >= 1) return v + 's';
+    return '1/' + Math.round(1/v) + 's';
+  }
+
+  function formatDate(v) {
+    if (!v) return null;
+    if (v instanceof Date) return v.toLocaleDateString('pt-BR');
+    const s = String(v).replace(':', '/').replace(':', '/');
+    return s.split(' ')[0];
+  }
+
+  function render() {
+    if (!state.img) return;
+    const canvas = document.getElementById('previewCanvas');
+    const dz2 = document.getElementById('dropZone');
+    dz2.style.display = 'none';
+    canvas.style.display = 'block';
+
+    const src = state.img;
+    let sw = src.naturalWidth, sh = src.naturalHeight;
+
+    // Crop for format
+    let cropW = sw, cropH = sh;
+    const fmtMap = { '1:1': [1,1], '4:5': [4,5], '9:16': [9,16], '16:9': [16,9], '1.91:1': [1.91,1] };
+    if (state.fmt !== 'original' && fmtMap[state.fmt]) {
+      const [rw, rh] = fmtMap[state.fmt];
+      const targetR = rw / rh;
+      const srcR = sw / sh;
+      if (targetR > srcR) { cropH = Math.round(sw / targetR); }
+      else { cropW = Math.round(sh * targetR); }
+    }
+
+    const barH = Math.round(cropW * 0.055);
+    const padding = Math.round(barH * 0.22);
+    const totalH = cropH + barH;
+
+    canvas.width = cropW;
+    canvas.height = totalH;
+
+    const ctx = canvas.getContext('2d');
+    const ox = Math.floor((sw - cropW) / 2);
+    const oy = Math.floor((sh - cropH) / 2);
+
+    // Draw image
+    ctx.drawImage(src, ox, oy, cropW, cropH, 0, 0, cropW, cropH);
+
+    // Watermark position — currently supports bottom bar (default) and overlay options
+    const isBottom = ['bl','bc','br'].includes(state.pos);
+    const isTop = ['tl','tc','tr'].includes(state.pos);
+    const isMiddle = ['ml','mc','mr'].includes(state.pos);
+
+    let barY = cropH; // default bottom
+    if (isTop) barY = 0;
+    if (isMiddle) barY = Math.floor((cropH - barH) / 2);
+
+    // Bar background
+    if (state.style === 'white') {
+      ctx.fillStyle = 'rgba(255,255,255,0.95)';
+      ctx.fillRect(0, barY, cropW, barH);
+    } else if (state.style === 'dark') {
+      ctx.fillStyle = 'rgba(15,15,15,0.92)';
+      ctx.fillRect(0, barY, cropW, barH);
+    } else {
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.fillRect(0, barY, cropW, barH);
+    }
+
+    // Gather visible fields
+    const e = state.exif;
+    const show = id => document.getElementById(id).checked;
+    const isDark = state.style === 'dark' || state.style === 'glass';
+    const mainColor = isDark ? '#f0f0f0' : '#111';
+    const mutedColor = isDark ? '#aaa' : '#666';
+    const chipBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
+
+    const fontFam = fontMap[state.font];
+    const baseFontSize = Math.round(barH * 0.28);
+    const smallFontSize = Math.round(barH * 0.22);
+
+    ctx.textBaseline = 'middle';
+    const midY = barY + barH / 2;
+
+    // Camera name (left)
+    const camera = show('tog-camera') ? buildCamera(e) : null;
+    let leftX = padding;
+
+    if (camera) {
+      ctx.fillStyle = mainColor;
+      ctx.font = `600 ${baseFontSize}px ${fontFam}`;
+      ctx.fillText(camera, leftX, midY - barH * 0.12);
+    }
+
+    // Lens (below camera)
+    const lens = show('tog-lens') ? (e.LensModel || e.Lens || null) : null;
+    if (lens) {
+      ctx.fillStyle = mutedColor;
+      ctx.font = `400 ${smallFontSize}px ${fontFam}`;
+      ctx.fillText(lens, leftX, midY + barH * 0.18);
+    }
+
+    // Settings chips (right side)
+    const chips = [];
+    if (show('tog-shutter') && e.ExposureTime) chips.push(formatShutter(e.ExposureTime));
+    if (show('tog-aperture') && e.FNumber) chips.push('f/' + e.FNumber);
+    if (show('tog-iso') && (e.ISO || e.ISOSpeedRatings)) chips.push('ISO ' + (e.ISO || e.ISOSpeedRatings));
+    if (show('tog-focal') && e.FocalLength) chips.push(e.FocalLength + 'mm');
+    if (show('tog-date') && (e.DateTimeOriginal || e.DateTime)) chips.push(formatDate(e.DateTimeOriginal || e.DateTime));
+
+    // Draw chips right-aligned
+    ctx.font = `500 ${smallFontSize}px ${fontFam}`;
+    const chipPadX = Math.round(barH * 0.25);
+    const chipPadY = Math.round(barH * 0.14);
+    const chipGap = Math.round(barH * 0.12);
+    const chipR = Math.round(barH * 0.12);
+
+    let rx = cropW - padding;
+    chips.slice().reverse().forEach(chip => {
+      const tw = ctx.measureText(chip).width;
+      const chipW = tw + chipPadX * 2;
+      const chipX = rx - chipW;
+      const chipTop = midY - smallFontSize / 2 - chipPadY;
+      const chipHt = smallFontSize + chipPadY * 2;
+
+      // Draw pill background
+      ctx.fillStyle = chipBg;
+      roundRect(ctx, chipX, chipTop, chipW, chipHt, chipR);
+      ctx.fill();
+
+      ctx.fillStyle = mainColor;
+      ctx.fillText(chip, chipX + chipPadX, midY);
+      rx = chipX - chipGap;
+    });
+
+    // Camera icon (far right if no chips)
+    if (chips.length === 0) {
+      const iconSize = Math.round(barH * 0.45);
+      drawCameraIcon(ctx, cropW - padding - iconSize, midY - iconSize/2, iconSize, mainColor);
+    }
+
+    // Vertical divider between camera and chips
+    if (camera || lens) {
+      const divX = rx - chipGap;
+      if (divX > leftX + 80) {
+        ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(divX, barY + barH * 0.25);
+        ctx.lineTo(divX, barY + barH * 0.75);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function drawCameraIcon(ctx, x, y, size, color) {
+    ctx.fillStyle = color;
+    const s = size;
+    ctx.beginPath();
+    ctx.roundRect(x, y + s*0.2, s, s*0.7, s*0.1);
+    ctx.fill();
+    ctx.fillStyle = (color === '#111') ? '#fff' : '#111';
+    ctx.beginPath();
+    ctx.arc(x + s*0.5, y + s*0.55, s*0.22, 0, Math.PI*2);
+    ctx.fill();
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x + s*0.5, y + s*0.55, s*0.13, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  function exportImage() {
+    const canvas = document.getElementById('previewCanvas');
+    const a = document.createElement('a');
+    a.download = 'frameta_' + Date.now() + '.jpg';
+    canvas.toBlob(blob => {
+      a.href = URL.createObjectURL(blob);
+      a.click();
+    }, 'image/jpeg', 0.95);
+  }
+
+  function setStyle(el) {
+    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    state.style = el.dataset.style;
+    render();
+  }
+
+  function setPos(el) {
+    document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    state.pos = el.dataset.pos;
+    render();
+  }
+
+  function setFmt(el) {
+    document.querySelectorAll('.fmt-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    state.fmt = el.dataset.fmt;
+    render();
+  }
+
+  function setFont(el) {
+    document.querySelectorAll('.font-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    state.font = el.dataset.font;
+    render();
+  }
+</script>
+</body>
+</html>
