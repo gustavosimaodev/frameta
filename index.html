@@ -239,9 +239,9 @@
       ['Câmera', buildCamera(e)],
       ['Lente', e.LensModel || e.Lens || null],
       ['Velocidade', formatShutter(e.ExposureTime)],
-      ['Abertura', e.FNumber ? 'f/' + e.FNumber : null],
+      ['Abertura', formatFNumber(e.FNumber)],
       ['ISO', e.ISO || e.ISOSpeedRatings || null],
-      ['Focal', e.FocalLength ? e.FocalLength + 'mm' : null],
+      ['Focal', formatFocal(e.FocalLength)],
       ['Focal (equiv.)', e.FocalLengthIn35mmFormat ? e.FocalLengthIn35mmFormat + 'mm' : null],
       ['Exposição', e.ExposureBiasValue != null ? (e.ExposureBiasValue > 0 ? '+' : '') + e.ExposureBiasValue + ' EV' : null],
       ['Modo', e.ExposureProgram || null],
@@ -262,141 +262,190 @@
   }
 
   function buildCamera(e) {
-    const make = e.Make || '';
-    const model = e.Model || '';
+    const make = (e.Make || '').trim();
+    const model = (e.Model || '').trim();
     if (!make && !model) return null;
     if (model.toLowerCase().startsWith(make.toLowerCase())) return model;
     return (make + ' ' + model).trim();
   }
 
   function formatShutter(v) {
-    if (!v) return null;
-    if (v >= 1) return v + 's';
-    return '1/' + Math.round(1/v) + 's';
+    if (v == null) return null;
+    // exifr pode retornar objeto {numerator, denominator}
+    if (typeof v === 'object' && v.numerator != null) v = v.numerator / v.denominator;
+    v = parseFloat(v);
+    if (isNaN(v)) return null;
+    if (v >= 1) return v % 1 === 0 ? v + 's' : v.toFixed(1) + 's';
+    const denom = Math.round(1 / v);
+    return '1/' + denom + 's';
+  }
+
+  function formatFNumber(v) {
+    if (v == null) return null;
+    if (typeof v === 'object' && v.numerator != null) v = v.numerator / v.denominator;
+    v = parseFloat(v);
+    if (isNaN(v)) return null;
+    return 'f/' + (v % 1 === 0 ? v.toFixed(0) : parseFloat(v.toFixed(1)));
+  }
+
+  function formatFocal(v) {
+    if (v == null) return null;
+    if (typeof v === 'object' && v.numerator != null) v = v.numerator / v.denominator;
+    v = parseFloat(v);
+    if (isNaN(v)) return null;
+    return Math.round(v) + 'mm';
   }
 
   function formatDate(v) {
     if (!v) return null;
     if (v instanceof Date) return v.toLocaleDateString('pt-BR');
-    const s = String(v).replace(':', '/').replace(':', '/');
+    const s = String(v);
+    // formato EXIF: "2024:03:15 12:00:00"
+    const match = s.match(/^(\d{4})[:\-](\d{2})[:\-](\d{2})/);
+    if (match) return `${match[3]}/${match[2]}/${match[1]}`;
     return s.split(' ')[0];
+  }
+
+  function pill(ctx, x, y, w, h, r) {
+    const rad = Math.min(r, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rad, y);
+    ctx.lineTo(x + w - rad, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rad);
+    ctx.lineTo(x + w, y + h - rad);
+    ctx.arcTo(x + w, y + h, x, y + h, rad);
+    ctx.lineTo(x + rad, y + h);
+    ctx.arcTo(x, y + h, x, y, rad);
+    ctx.lineTo(x, y + rad);
+    ctx.arcTo(x, y, x + w, y, rad);
+    ctx.closePath();
   }
 
   function render() {
     if (!state.img) return;
     const canvas = document.getElementById('previewCanvas');
-    const dz2 = document.getElementById('dropZone');
-    dz2.style.display = 'none';
+    document.getElementById('dropZone').style.display = 'none';
     canvas.style.display = 'block';
 
     const src = state.img;
     let sw = src.naturalWidth, sh = src.naturalHeight;
 
-    // Crop for format
+    // --- Crop para o formato escolhido ---
     let cropW = sw, cropH = sh;
-    const fmtMap = { '1:1': [1,1], '4:5': [4,5], '9:16': [9,16], '16:9': [16,9], '1.91:1': [1.91,1] };
+    const fmtMap = { '1:1':[1,1], '4:5':[4,5], '9:16':[9,16], '16:9':[16,9], '1.91:1':[1.91,1] };
     if (state.fmt !== 'original' && fmtMap[state.fmt]) {
       const [rw, rh] = fmtMap[state.fmt];
       const targetR = rw / rh;
       const srcR = sw / sh;
-      if (targetR > srcR) { cropH = Math.round(sw / targetR); }
-      else { cropW = Math.round(sh * targetR); }
+      if (targetR > srcR) cropH = Math.round(sw / targetR);
+      else cropW = Math.round(sh * targetR);
     }
 
-    const barH = Math.round(cropW * 0.055);
-    const padding = Math.round(barH * 0.22);
-    const totalH = cropH + barH;
+    // --- Dimensionamento da barra ---
+    // Barra com altura mínima de 80px e máxima proporcional
+    const barH = Math.max(80, Math.round(cropW * 0.06));
+    const pad = Math.round(barH * 0.28);
 
-    canvas.width = cropW;
+    // Posição: top/middle sobrepõe a imagem; bottom adiciona abaixo
+    const isTop    = ['tl','tc','tr'].includes(state.pos);
+    const isMiddle = ['ml','mc','mr'].includes(state.pos);
+    const isBottom = ['bl','bc','br'].includes(state.pos);
+
+    const totalH = isBottom ? cropH + barH : cropH;
+    canvas.width  = cropW;
     canvas.height = totalH;
 
     const ctx = canvas.getContext('2d');
     const ox = Math.floor((sw - cropW) / 2);
     const oy = Math.floor((sh - cropH) / 2);
-
-    // Draw image
     ctx.drawImage(src, ox, oy, cropW, cropH, 0, 0, cropW, cropH);
 
-    // Watermark position — currently supports bottom bar (default) and overlay options
-    const isBottom = ['bl','bc','br'].includes(state.pos);
-    const isTop = ['tl','tc','tr'].includes(state.pos);
-    const isMiddle = ['ml','mc','mr'].includes(state.pos);
+    let barY = isBottom ? cropH : isTop ? 0 : Math.floor((cropH - barH) / 2);
 
-    let barY = cropH; // default bottom
-    if (isTop) barY = 0;
-    if (isMiddle) barY = Math.floor((cropH - barH) / 2);
-
-    // Bar background
-    if (state.style === 'white') {
-      ctx.fillStyle = 'rgba(255,255,255,0.95)';
-      ctx.fillRect(0, barY, cropW, barH);
-    } else if (state.style === 'dark') {
-      ctx.fillStyle = 'rgba(15,15,15,0.92)';
-      ctx.fillRect(0, barY, cropW, barH);
-    } else {
-      ctx.fillStyle = 'rgba(0,0,0,0.45)';
-      ctx.fillRect(0, barY, cropW, barH);
-    }
-
-    // Gather visible fields
-    const e = state.exif;
-    const show = id => document.getElementById(id).checked;
+    // --- Fundo da barra ---
     const isDark = state.style === 'dark' || state.style === 'glass';
-    const mainColor = isDark ? '#f0f0f0' : '#111';
-    const mutedColor = isDark ? '#aaa' : '#666';
-    const chipBg = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.07)';
+    if (state.style === 'white') {
+      ctx.fillStyle = '#ffffff';
+    } else if (state.style === 'dark') {
+      ctx.fillStyle = '#0f0f0f';
+    } else {
+      ctx.fillStyle = 'rgba(0,0,0,0.52)';
+    }
+    ctx.fillRect(0, barY, cropW, barH);
 
-    const fontFam = fontMap[state.font];
-    const baseFontSize = Math.round(barH * 0.28);
-    const smallFontSize = Math.round(barH * 0.22);
+    // --- Cores de acordo com o estilo ---
+    const mainColor  = isDark ? '#f0f0f0' : '#111111';
+    const mutedColor = isDark ? '#999999' : '#666666';
+    const chipBg     = isDark ? 'rgba(255,255,255,0.13)' : 'rgba(0,0,0,0.07)';
+    const divColor   = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
+    const fontFam    = fontMap[state.font];
 
-    ctx.textBaseline = 'middle';
+    // --- Tamanhos de fonte proporcionais à barra ---
+    const fsCamera = Math.round(barH * 0.30);  // câmera — maior
+    const fsLens   = Math.round(barH * 0.21);  // lente — menor
+    const fsChip   = Math.round(barH * 0.24);  // chips — médio
+
+    const show = id => document.getElementById(id).checked;
+    const e    = state.exif;
+
+    // Centro vertical da barra
     const midY = barY + barH / 2;
 
-    // Camera name (left)
+    // --- LADO ESQUERDO: Câmera + Lente ---
     const camera = show('tog-camera') ? buildCamera(e) : null;
-    let leftX = padding;
+    const lens   = show('tog-lens')   ? (e.LensModel || e.Lens || null) : null;
 
-    if (camera) {
+    let leftX = pad;
+
+    if (camera && lens) {
+      // câmera na linha superior, lente na inferior
+      const topY    = barY + barH * 0.30;
+      const bottomY = barY + barH * 0.72;
+      ctx.textBaseline = 'middle';
       ctx.fillStyle = mainColor;
-      ctx.font = `600 ${baseFontSize}px ${fontFam}`;
-      ctx.fillText(camera, leftX, midY - barH * 0.12);
-    }
-
-    // Lens (below camera)
-    const lens = show('tog-lens') ? (e.LensModel || e.Lens || null) : null;
-    if (lens) {
+      ctx.font = `700 ${fsCamera}px ${fontFam}`;
+      ctx.fillText(camera, leftX, topY);
       ctx.fillStyle = mutedColor;
-      ctx.font = `400 ${smallFontSize}px ${fontFam}`;
-      ctx.fillText(lens, leftX, midY + barH * 0.18);
+      ctx.font = `400 ${fsLens}px ${fontFam}`;
+      ctx.fillText(lens, leftX, bottomY);
+    } else if (camera) {
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = mainColor;
+      ctx.font = `700 ${fsCamera}px ${fontFam}`;
+      ctx.fillText(camera, leftX, midY);
+    } else if (lens) {
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = mutedColor;
+      ctx.font = `400 ${fsLens}px ${fontFam}`;
+      ctx.fillText(lens, leftX, midY);
     }
 
-    // Settings chips (right side)
+    // --- LADO DIREITO: chips de configuração ---
     const chips = [];
-    if (show('tog-shutter') && e.ExposureTime) chips.push(formatShutter(e.ExposureTime));
-    if (show('tog-aperture') && e.FNumber) chips.push('f/' + e.FNumber);
-    if (show('tog-iso') && (e.ISO || e.ISOSpeedRatings)) chips.push('ISO ' + (e.ISO || e.ISOSpeedRatings));
-    if (show('tog-focal') && e.FocalLength) chips.push(e.FocalLength + 'mm');
-    if (show('tog-date') && (e.DateTimeOriginal || e.DateTime)) chips.push(formatDate(e.DateTimeOriginal || e.DateTime));
+    if (show('tog-shutter')  && e.ExposureTime)                        chips.push(formatShutter(e.ExposureTime));
+    if (show('tog-aperture') && e.FNumber != null)                     chips.push(formatFNumber(e.FNumber));
+    if (show('tog-iso')      && (e.ISO || e.ISOSpeedRatings))          chips.push('ISO\u202f' + (e.ISO || e.ISOSpeedRatings));
+    if (show('tog-focal')    && e.FocalLength != null)                  chips.push(formatFocal(e.FocalLength));
+    if (show('tog-date')     && (e.DateTimeOriginal || e.DateTime))    chips.push(formatDate(e.DateTimeOriginal || e.DateTime));
 
-    // Draw chips right-aligned
-    ctx.font = `500 ${smallFontSize}px ${fontFam}`;
-    const chipPadX = Math.round(barH * 0.25);
-    const chipPadY = Math.round(barH * 0.14);
-    const chipGap = Math.round(barH * 0.12);
-    const chipR = Math.round(barH * 0.12);
+    ctx.font = `500 ${fsChip}px ${fontFam}`;
+    ctx.textBaseline = 'middle';
 
-    let rx = cropW - padding;
+    const chipPadX = Math.round(fsChip * 0.7);
+    const chipPadY = Math.round(fsChip * 0.35);
+    const chipGap  = Math.round(barH * 0.10);
+    const chipR    = Math.round(fsChip * 0.4);
+    const chipH    = fsChip + chipPadY * 2;
+    const chipTop  = midY - chipH / 2;
+
+    let rx = cropW - pad;
     chips.slice().reverse().forEach(chip => {
-      const tw = ctx.measureText(chip).width;
+      const tw   = ctx.measureText(chip).width;
       const chipW = tw + chipPadX * 2;
       const chipX = rx - chipW;
-      const chipTop = midY - smallFontSize / 2 - chipPadY;
-      const chipHt = smallFontSize + chipPadY * 2;
 
-      // Draw pill background
       ctx.fillStyle = chipBg;
-      roundRect(ctx, chipX, chipTop, chipW, chipHt, chipR);
+      pill(ctx, chipX, chipTop, chipW, chipH, chipR);
       ctx.fill();
 
       ctx.fillStyle = mainColor;
@@ -404,54 +453,18 @@
       rx = chipX - chipGap;
     });
 
-    // Camera icon (far right if no chips)
-    if (chips.length === 0) {
-      const iconSize = Math.round(barH * 0.45);
-      drawCameraIcon(ctx, cropW - padding - iconSize, midY - iconSize/2, iconSize, mainColor);
-    }
-
-    // Vertical divider between camera and chips
-    if (camera || lens) {
-      const divX = rx - chipGap;
-      if (divX > leftX + 80) {
-        ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.1)';
-        ctx.lineWidth = 1;
+    // --- Divisória vertical ---
+    if ((camera || lens) && chips.length > 0) {
+      const divX = rx - chipGap * 0.5;
+      if (divX > leftX + 60) {
+        ctx.strokeStyle = divColor;
+        ctx.lineWidth = Math.max(1, Math.round(barH * 0.015));
         ctx.beginPath();
-        ctx.moveTo(divX, barY + barH * 0.25);
-        ctx.lineTo(divX, barY + barH * 0.75);
+        ctx.moveTo(divX, barY + barH * 0.22);
+        ctx.lineTo(divX, barY + barH * 0.78);
         ctx.stroke();
       }
     }
-  }
-
-  function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.lineTo(x + r, y + h);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.lineTo(x, y + r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-  }
-
-  function drawCameraIcon(ctx, x, y, size, color) {
-    ctx.fillStyle = color;
-    const s = size;
-    ctx.beginPath();
-    ctx.roundRect(x, y + s*0.2, s, s*0.7, s*0.1);
-    ctx.fill();
-    ctx.fillStyle = (color === '#111') ? '#fff' : '#111';
-    ctx.beginPath();
-    ctx.arc(x + s*0.5, y + s*0.55, s*0.22, 0, Math.PI*2);
-    ctx.fill();
-    ctx.fillStyle = color;
-    ctx.beginPath();
-    ctx.arc(x + s*0.5, y + s*0.55, s*0.13, 0, Math.PI*2);
-    ctx.fill();
   }
 
   function exportImage() {
