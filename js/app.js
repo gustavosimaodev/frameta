@@ -185,14 +185,24 @@
       exifStatus.textContent = '✓ EXIF detectado';
     } else if (result._raw && result._raw._ok) {
       exifStatus.classList.add('warn');
-      exifStatus.textContent = '⚠ EXIF limitado';
+      exifStatus.textContent = '⚠ EXIF sem dados de câmera';
     } else {
       exifStatus.classList.add('err');
-      exifStatus.textContent = '✕ ' + (result.error || 'Sem EXIF');
+      exifStatus.textContent = '✕ Sem EXIF';
     }
 
-    // Lista de campos formatados
+    // Mensagem explicativa quando não há dados de câmera
     exifList.innerHTML = '';
+    if (!result.ok) {
+      const msg = document.createElement('div');
+      msg.style.cssText = 'font-size:12px;color:#787878;line-height:1.7;margin-top:4px';
+      const isStripped = result._raw && result._raw._ok;
+      msg.innerHTML = isStripped
+        ? `Esta foto teve os metadados de câmera removidos — provavelmente foi exportada pelo <strong>Instagram, WhatsApp ou similar</strong>.<br><br>Use o JPEG original saído da câmera ou exportado pelo <strong>Lightroom/Capture One</strong>.`
+        : `Nenhum bloco EXIF encontrado neste arquivo.<br><br>Tente com um JPEG original da câmera.`;
+      exifList.appendChild(msg);
+      return;
+    }
     const display = [
       ['Câmera',     result.fields.camera],
       ['Lente',      result.fields.lens],
