@@ -221,14 +221,18 @@
     // Debug: mostra os dados crus para diagnóstico
     const debugBlock = document.getElementById('debugBlock');
     const debugPre   = document.getElementById('debugPre');
-    if (debugBlock && debugPre && result._raw) {
+    if (debugBlock && debugPre) {
       debugBlock.style.display = 'block';
+      const log = result._log || [];
       const safe = {};
-      Object.entries(result._raw).forEach(([k, v]) => {
-        if (k.startsWith('_')) return;
-        safe[k] = v;
-      });
-      debugPre.textContent = JSON.stringify(safe, null, 2);
+      if (result._raw) {
+        Object.entries(result._raw).forEach(([k, v]) => {
+          if (!k.startsWith('_')) safe[k] = v;
+        });
+      }
+      debugPre.textContent =
+        '── LOG ──\n' + log.join('\n') +
+        '\n\n── RAW FIELDS ──\n' + JSON.stringify(safe, null, 2);
     }
   }
 
