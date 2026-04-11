@@ -7,6 +7,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 ## [Unreleased]
 
 ### Web
+- [ ] Canvas redimensionável com imagem arrastável dentro do formato de rede social
 - [ ] Batch mode (múltiplas fotos)
 - [ ] Upload de logo própria na barra
 - [ ] Color picker para fundo e texto
@@ -29,38 +30,79 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 
 ---
 
+## [0.4.0] — 2026-04-10
+
+UI compacta, overlay sem fundo, seletor de tema.
+
+### Added
+- Estilo **Overlay**: texto branco com stroke preto fino, sem fundo — sobreposição direta sobre a imagem
+- Seletor de **tema da interface**: Claro / Escuro / Padrão do sistema (detecta `prefers-color-scheme` em tempo real)
+- Tema escuro completo via `data-theme="dark"` com variáveis CSS
+
+### Changed
+- Estilo padrão alterado de "Branco" para "Overlay"
+- "Glass" renomeado e substituído por "Overlay" com lógica de renderização dedicada
+- Botões de posição reduzidos (altura 28px) — sidebar agora cabe sem scroll na maioria das resoluções
+- Sidebar mais compacta: padding reduzido, seções com menos gap, fontes de rótulo menores
+- Fonte base reduzida de 14px para 13px
+- Chips no modo overlay com fundo semitransparente escuro para legibilidade
+- Divisória vertical no overlay com opacidade maior para contraste
+- Marca d'água "frameta" adaptada para cada estilo
+
+### Fixed
+- Texto do crédito "by Gustavo de Morais Simão" agora é link clicável para instagram.com/gsimao14
+- Hover no link de crédito com underline dourado sutil
+
+---
+
+## [0.3.0] — 2026-04-10
+
+Parser EXIF v4 — segue IFD chain completa.
+
+### Added
+- Segue IFD chain completa (IFD0 → IFD1 → ...) via ponteiro `nextIFD`
+- Leitura de `ExifIFD` e `SubIFD` via ponteiros de sub-IFD
+- Painel "Raw EXIF debug" colapsável com log de diagnóstico linha a linha
+- Mensagem de erro explicativa quando foto teve EXIF removido por redes sociais
+
+### Fixed
+- Arquivos exportados pelo Instagram/WhatsApp (IFD0 com 3 entradas apenas) agora extraem corretamente quando os dados reais estão no IFD1 ou ExifIFD
+- Suporte correto a big-endian (MM byte order)
+- Scan de "Exif" nos primeiros 64 bytes do segmento APP1 em vez de offset fixo
+
+---
+
 ## [0.2.0] — 2026-04-10
 
 Reescrita da arquitetura. Parser EXIF nativo. UI refinada.
 
 ### Added
-- Parser EXIF binário nativo (`js/exif.js`) — leitura direta do segmento APP1/TIFF do JPEG, sem CDN externo
+- Parser EXIF binário nativo (`js/exif.js`) — sem CDN externo
 - Suporte a byte order II (little endian) e MM (big endian)
 - Leitura de tipos TIFF: BYTE, ASCII, SHORT, LONG, RATIONAL, SLONG, SRATIONAL
-- Formatadores robustos: `formatShutter`, `formatAperture`, `formatFocal`, `formatDate`
-- Tratamento correto de valores RATIONAL (objeto `{n, d}`)
-- Status badge EXIF no painel direito: ok / limitado / ausente
-- Módulo `render.js` separado com função `FrametaRender.draw()`
-- Controller `app.js` com estado centralizado e separação de responsabilidades
-- Design system em `css/main.css` com variáveis CSS e tipografia DM Sans + DM Mono
+- Formatadores: `fmtShutter`, `fmtAperture`, `fmtFocal`, `fmtDate`
+- Tratamento de valores RATIONAL como float direto
+- Status badge EXIF: ok / limitado / ausente
+- Módulo `render.js` separado — `FrametaRender.draw()`
+- Controller `app.js` com estado centralizado
+- Design system `css/main.css` com variáveis CSS — DM Sans + DM Mono
 - Toast de feedback para todas as ações
-- Marca d'água "frameta" discreta no canto da barra exportada
-- Linha separadora entre barra e imagem
-- Tab "Sobre" com informações do projeto e créditos
-- Crédito "Desenvolvido por Gustavo de Morais Simão" no header e na página Sobre
+- Marca d'água "frameta" discreta na barra exportada
+- Tab "Sobre" com roadmap e créditos
+- Crédito "Desenvolvido por Gustavo de Morais Simão" no header
 
 ### Fixed
-- FNumber exibindo float bruto (ex: `f/2.800000001`) → corrigido para `f/2.8`
-- ExposureTime como objeto RATIONAL não era tratado → corrigido
-- FocalLength não arredondado → corrigido para `85mm`
-- Data EXIF no formato `2024:03:15` não convertida → corrigido para `15/03/2024`
-- Barra invisível em imagens grandes (altura mínima agora garantida em 90px)
-- `roundRect` nativo com incompatibilidade de browser → substituído por função `pill()` própria
-- Canvas não crescia para barra em posição "bottom" → corrigido com `totalH = cropH + barH`
+- FNumber float bruto → `f/2.8`
+- ExposureTime como objeto RATIONAL → tratado corretamente
+- FocalLength não arredondado → `85mm`
+- Data EXIF `2024:03:15` → `15/03/2024`
+- Barra invisível em imagens grandes — mínimo 90px garantido
+- `roundRect` nativo → substituído por `pill()` compatível
+- Canvas não crescia para barra em posição "bottom" → corrigido
 
 ### Changed
-- Removida dependência do `exifr` (CDN externo) — parsing 100% local
-- Arquitetura refatorada de 1 arquivo → 4 arquivos com responsabilidades claras
+- Removida dependência do `exifr` (CDN) — parsing 100% local
+- Arquitetura refatorada: 1 arquivo → 4 arquivos
 
 ---
 
@@ -70,7 +112,7 @@ Versão inicial — single file, prova de conceito.
 
 ### Added
 - Upload por clique e drag-and-drop
-- Parsing EXIF via biblioteca `exifr` (CDN)
+- Parsing EXIF via `exifr` (CDN)
 - Preview com barra de metadados
 - 3 estilos, 9 posições, 6 formatos, 3 fontes
 - Toggles por campo

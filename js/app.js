@@ -22,7 +22,7 @@
       focal:    true,
       date:     false,
     },
-    style: 'white',
+    style: 'overlay',
     pos:   'bl',
     fmt:   'original',
     font:  'sans',
@@ -83,6 +83,42 @@
   setupGroup('posGroup',   'pos');
   setupGroup('fmtGroup',   'fmt');
   setupGroup('fontGroup',  'font');
+
+  /* -------------------------------------------------------
+     TEMA DA INTERFACE
+  ------------------------------------------------------- */
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+    } else if (theme === 'light') {
+      root.removeAttribute('data-theme');
+    } else {
+      // Sistema
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      prefersDark ? root.setAttribute('data-theme','dark') : root.removeAttribute('data-theme');
+    }
+  }
+
+  // Inicializa com preferência do sistema
+  applyTheme('system');
+
+  // Escuta mudança do sistema em tempo real
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const active = document.querySelector('#themeGroup .opt-btn.active');
+    if (active && active.dataset.value === 'system') applyTheme('system');
+  });
+
+  const themeGroup = $('themeGroup');
+  if (themeGroup) {
+    themeGroup.querySelectorAll('[data-value]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        themeGroup.querySelectorAll('[data-value]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyTheme(btn.dataset.value);
+      });
+    });
+  }
 
   /* -------------------------------------------------------
      UPLOAD — FILE INPUT
