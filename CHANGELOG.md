@@ -6,14 +6,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 
 ## [Unreleased]
 
-### v0.6.0 — Canvas interativo com crop e posicionamento
+### v0.7.0 — Canvas interativo com crop e posicionamento
 > Permite ao usuário reposicionar e escalar a imagem dentro do canvas ao mudar o formato de exportação (1:1, 4:5, 9:16 etc.), em vez do crop automático centralizado atual.
 - [ ] Canvas secundário interativo com handles de arrastar e redimensionar
 - [ ] Preview do recorte em tempo real ao mudar o formato
 - [ ] Botão "centralizar" para voltar ao crop automático
 - [ ] Zoom in/out com scroll ou pinch
 
-### v0.7.0 — Batch mode (múltiplas fotos)
+### v0.8.0 — Batch mode (múltiplas fotos)
 > Permitir carregar diversas imagens em uma única sessão, percorrer cada uma individualmente para previsualização e ajuste fino, e exportar todas com o mesmo conjunto de configurações de overlay aplicado em massa.
 - [ ] Upload múltiplo — seleção de N arquivos de uma vez ou drag de vários
 - [ ] Filmstrip / carrossel de miniaturas para navegar entre as fotos carregadas
@@ -46,6 +46,26 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 - [ ] Domínio próprio (frameta.com / frameta.app)
 - [ ] Analytics privacy-first (Plausible)
 - [ ] PWA — instalável como app no desktop e mobile
+
+---
+
+## [0.6.0] — 2026-04-11
+
+Refinamento de UX: campos no painel correto, slider unificado, pill de marca integrado ao bloco, tab Feedback separada.
+
+### Added
+- Tab **Feedback** na navegação principal — mesma aparência das demais páginas, formulário Formspree com campos de nome, e-mail e mensagem
+- Campo de e-mail adicionado ao formulário de feedback
+- Pill obrigatório "frameta.vercel.app" integrado ao bloco overlay medido — acompanha posicionamento, tamanho e respeitando os limites da imagem em qualquer escala de fonte
+
+### Changed
+- Seção "Campos e ordem" movida de volta para o painel direito (abaixo do debug EXIF) — sidebar esquerdo reservado apenas para controles de renderização
+- Botões P/M/G de tamanho overlay removidos — slider de fonte (60–160%) é o único controle, mapeando internamente para sm/md/lg
+- Pill de marca agora entra no array `measured` junto com os demais itens — altura total do bloco calculada corretamente incluindo a marca, sem ultrapassar os limites da imagem
+- Seção "Sugestões" removida da página Sobre — conteúdo migrado para a nova tab Feedback
+
+### Fixed
+- Pill obrigatório ultrapassava os limites da tela ao aumentar a fonte — corrigido ao incluí-lo no cálculo de `totalPillH`
 
 ---
 
