@@ -13,7 +13,14 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 - [ ] Botão "centralizar" para voltar ao crop automático
 - [ ] Zoom in/out com scroll ou pinch
 
-### v0.6.0 — Batch mode (múltiplas fotos)
+### v0.6.0 — Refinamento de UX do sidebar
+> Consolidação e simplificação dos controles do painel lateral.
+- [ ] Unificar "Campos visíveis" e "Ordem dos campos" em um único painel — cada campo com toggle de visibilidade à esquerda e handle de drag-and-drop à direita, tudo na mesma linha
+- [ ] Painel de metadados colapsável (estilo "Raw EXIF debug") — minimizável com um clique para liberar espaço no sidebar
+- [ ] Controle de tamanho de fonte das informações do overlay (slider ou botões XS/S/M/L/XL) — separado do tamanho geral do bloco overlay
+- [ ] Mover controle de tamanho do overlay para dentro do mesmo painel dos campos, evitando seção separada
+
+### v0.7.0 — Batch mode (múltiplas fotos)
 > Permitir carregar diversas imagens em uma única sessão, percorrer cada uma individualmente para previsualização e ajuste fino, e exportar todas com o mesmo conjunto de configurações de overlay aplicado em massa.
 - [ ] Upload múltiplo — seleção de N arquivos de uma vez ou drag de vários
 - [ ] Filmstrip / carrossel de miniaturas para navegar entre as fotos carregadas
