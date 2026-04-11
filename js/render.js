@@ -127,43 +127,47 @@ window.FrametaRender = (() => {
         shutter: '1/T', aperture: 'f/', iso: 'ISO', focal: 'mm', date: 'DATA',
       };
 
-      const items = []; // { value, isLabel, label }
+      const items = [];
       order.forEach(key => {
         if (visible[key] === false) return;
         const val = fields[key];
         if (!val) return;
-
-        if (key === 'camera' || key === 'lens') {
-          // Câmera e lente: texto direto, sem label separado
-          items.push({ key, value: val, label: null });
-        } else {
-          items.push({ key, value: val, label: LABELS[key] });
-        }
+        items.push({ key, value: val });
       });
 
-      if (items.length === 0) return;
+      // Pill obrigatório de marca — sempre ao final
+      items.push({ key: '_brand', value: 'frameta.vercel.app', isBrand: true });
 
-      /* Mede cada pill */
+      if (items.length === 1) return; // só a marca, sem dados — não renderiza
+
+      /* Mede cada pill — incluindo o de marca */
       ctx.textBaseline = 'middle';
       const measured = items.map(item => {
         const isCamLens = item.key === 'camera' || item.key === 'lens';
-        const fs = isCamLens
-          ? Math.max(13, Math.round(baseFs * (item.key === 'camera' ? 1.15 : 0.88)))
-          : baseFs;
-        const fw = isCamLens ? '700' : '500';
+        const isBrand   = !!item.isBrand;
+        // Marca: fonte menor e mais leve
+        const fs = isBrand
+          ? Math.max(9, Math.round(baseFs * 0.60))
+          : isCamLens
+            ? Math.max(13, Math.round(baseFs * (item.key === 'camera' ? 1.15 : 0.88)))
+            : baseFs;
+        const fw = isBrand ? '300' : isCamLens ? '700' : '500';
         ctx.font = `${fw} ${fs}px ${fontFam}`;
         const tw = ctx.measureText(item.value).width;
-        const pw = tw + pillPadX * 2;
-        const ph = fs + pillPadY * 2;
-        return { ...item, fs, fw, tw, pw, ph };
+        const px = isBrand ? Math.round(fs * 0.65) : pillPadX;
+        const py = isBrand ? Math.round(fs * 0.30) : pillPadY;
+        const pw = tw + px * 2;
+        const ph = fs + py * 2;
+        return { ...item, fs, fw, tw, pw, ph, px, py };
       });
 
-      // Largura total do bloco (a mais larga pill define)
+      // Largura do bloco = pill mais largo
       const blockW = Math.max(...measured.map(m => m.pw));
 
-      // Altura total do bloco
+      // Altura total incluindo gaps
       const totalPillH = measured.reduce((s, m) => s + m.ph, 0)
-                       + pillGap * (measured.length - 1);
+                       + pillGap * (measured.length - 1)
+                       + Math.round(pillGap * 0.6); // gap extra antes da marca
 
       /* Posição X do bloco */
       let blockX;
@@ -179,52 +183,38 @@ window.FrametaRender = (() => {
 
       /* Desenha cada pill */
       let currentY = blockY;
-      measured.forEach(item => {
+      measured.forEach((item, idx) => {
         const isCamLens = item.key === 'camera' || item.key === 'lens';
+        const isBrand   = !!item.isBrand;
 
-        // Fundo translúcido — câmera/lente ligeiramente mais opaco
-        const bgAlpha = isCamLens ? 0.52 : 0.42;
+        // Gap extra antes da marca
+        if (isBrand && idx > 0) currentY += Math.round(pillGap * 0.6);
+
+        const bgAlpha = isBrand ? 0.28 : isCamLens ? 0.52 : 0.42;
         ctx.fillStyle = `rgba(0,0,0,${bgAlpha})`;
         pill(ctx, blockX, currentY, item.pw, item.ph, pillRad);
         ctx.fill();
 
-        // Borda sutil
-        ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-        ctx.lineWidth   = 1;
+        ctx.strokeStyle = isBrand ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
         pill(ctx, blockX, currentY, item.pw, item.ph, pillRad);
         ctx.stroke();
 
-        // Texto
         const textY = currentY + item.ph / 2;
         ctx.font      = `${item.fw} ${item.fs}px ${fontFam}`;
-        ctx.fillStyle = '#ffffff';
-        outlineText(ctx, item.value, blockX + pillPadX, textY, strokeW);
+        ctx.fillStyle = isBrand ? 'rgba(255,255,255,0.50)' : '#ffffff';
+
+        if (isBrand) {
+          // Marca sem outline — discreta
+          ctx.fillText(item.value, blockX + item.px, textY);
+        } else {
+          outlineText(ctx, item.value, blockX + item.px, textY, strokeW);
+        }
 
         currentY += item.ph + pillGap;
       });
 
-      // Pill obrigatório de marca — sempre ao final, não removível
-      const brandText = 'frameta.vercel.app';
-      const brandFs   = Math.max(9, Math.round(baseFs * 0.62));
-      ctx.font = `300 ${brandFs}px ${fontFam}`;
-      const brandTw  = ctx.measureText(brandText).width;
-      const brandPadX = Math.round(brandFs * 0.7);
-      const brandPadY = Math.round(brandFs * 0.32);
-      const brandW    = brandTw + brandPadX * 2;
-      const brandH    = brandFs + brandPadY * 2;
-      const brandRad  = Math.round(brandFs * 0.4);
-      const brandGap  = Math.round(pillGap * 1.6);
-
-      ctx.fillStyle = 'rgba(0,0,0,0.30)';
-      pill(ctx, blockX, currentY + brandGap, brandW, brandH, brandRad);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-      ctx.lineWidth   = 1;
-      pill(ctx, blockX, currentY + brandGap, brandW, brandH, brandRad);
-      ctx.stroke();
-      ctx.font      = `300 ${brandFs}px ${fontFam}`;
-      ctx.fillStyle = 'rgba(255,255,255,0.55)';
-      ctx.fillText(brandText, blockX + brandPadX, currentY + brandGap + brandH / 2);
+      return; // encerra o modo overlay
 
       // Marca frameta discreta
       const wmFs = Math.max(9, Math.round(baseFs * 0.55));

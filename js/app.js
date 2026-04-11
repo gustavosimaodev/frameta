@@ -58,8 +58,9 @@
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab;
-      $('tabEditor').style.display = tab === 'editor' ? 'flex' : 'none';
-      $('tabAbout').style.display  = tab === 'about'  ? 'flex' : 'none';
+      $('tabEditor').style.display   = tab === 'editor'   ? 'flex'  : 'none';
+      $('tabAbout').style.display    = tab === 'about'    ? 'flex'  : 'none';
+      $('tabFeedback').style.display = tab === 'feedback' ? 'flex'  : 'none';
     });
   });
 
@@ -84,7 +85,6 @@
   setupGroup('posGroup',        'pos');
   setupGroup('fmtGroup',        'fmt');
   setupGroup('fontGroup',       'font');
-  setupGroup('overlaySizeGroup','overlaySize');
 
   /* Mostra/esconde seção de tamanho conforme o estilo */
   function updateOverlaySizeVisibility() {
@@ -95,14 +95,17 @@
   updateOverlaySizeVisibility();
 
   /* -------------------------------------------------------
-     SLIDER DE TAMANHO DE FONTE
+     SLIDER DE TAMANHO DE FONTE (controla tudo no overlay)
   ------------------------------------------------------- */
   const fontSizeSlider = $('fontSizeSlider');
   const fontSizeVal    = $('fontSizeVal');
   if (fontSizeSlider) {
     fontSizeSlider.addEventListener('input', () => {
-      state.fontScale = parseInt(fontSizeSlider.value) / 100;
-      fontSizeVal.textContent = fontSizeSlider.value + '%';
+      const pct = parseInt(fontSizeSlider.value);
+      state.fontScale   = pct / 100;
+      // overlaySize mapeado pelo valor do slider para manter compatibilidade com render.js
+      state.overlaySize = pct <= 80 ? 'sm' : pct <= 120 ? 'md' : 'lg';
+      fontSizeVal.textContent = pct + '%';
       render();
     });
   }
