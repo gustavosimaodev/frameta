@@ -19,6 +19,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 - [ ] Painel de metadados colapsável (estilo "Raw EXIF debug") — minimizável com um clique para liberar espaço no sidebar
 - [ ] Controle de tamanho de fonte das informações do overlay (slider ou botões XS/S/M/L/XL) — separado do tamanho geral do bloco overlay
 - [ ] Mover controle de tamanho do overlay para dentro do mesmo painel dos campos, evitando seção separada
+- [ ] Pill de marca obrigatória ao final da coluna de overlay com o texto "by frameta.vercel.app" — não removível pelo usuário, estilo consistente com os demais pills
 
 ### v0.7.0 — Batch mode (múltiplas fotos)
 > Permitir carregar diversas imagens em uma única sessão, percorrer cada uma individualmente para previsualização e ajuste fino, e exportar todas com o mesmo conjunto de configurações de overlay aplicado em massa.
