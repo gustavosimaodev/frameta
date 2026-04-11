@@ -1,6 +1,8 @@
 /**
- * frameta/js/exif.js  — v3
- * Parser EXIF binário com diagnóstico interno detalhado.
+ * frameta/js/exif.js — v4
+ * Corrige: segue IFD chain (IFD0→IFD1→...), lê SubIFD/ExifIFD,
+ * funciona com big-endian (MM) e IFDs minimalistas.
+ *
  * Autor: Gustavo de Morais Simão
  */
 
@@ -10,7 +12,10 @@ window.FrametaExif = (() => {
   const TAG = {
     0x010F:'Make', 0x0110:'Model', 0x0112:'Orientation',
     0x0131:'Software', 0x0132:'DateTime', 0x013B:'Artist',
-    0x8769:'_ExifIFD', 0x8825:'_GPSIFD',
+    // Ponteiros para sub-IFDs
+    0x014A:'SubIFD',
+    0x8769:'ExifIFD',
+    0x8825:'GPSIFD',
     // Exif IFD
     0x829A:'ExposureTime', 0x829D:'FNumber',
     0x8822:'ExposureProgram', 0x8827:'ISO',
@@ -27,10 +32,10 @@ window.FrametaExif = (() => {
 
   const TYPE_SIZE = {1:1,2:1,3:2,4:4,5:8,6:1,7:1,8:2,9:4,10:8,11:4,12:8};
 
-  /* ── LEITURA DE VALOR ──────────────────────────────────── */
+  /* ── LÊ VALOR ──────────────────────────────────────────── */
   function readVal(dv, type, count, off, le) {
     try {
-      if (type === 2) { // ASCII
+      if (type === 2) {
         let s = '';
         for (let i = 0; i < count && i < 1024; i++) {
           const c = dv.getUint8(off + i);
@@ -39,7 +44,7 @@ window.FrametaExif = (() => {
         }
         return s.trim() || null;
       }
-      if (type === 5 || type === 10) { // RATIONAL / SRATIONAL
+      if (type === 5 || type === 10) {
         const vals = [];
         for (let i = 0; i < Math.min(count, 8); i++) {
           const o = off + i * 8;
@@ -48,12 +53,12 @@ window.FrametaExif = (() => {
           const d = type === 5 ? dv.getUint32(o+4,le) : dv.getInt32(o+4,le);
           vals.push(d === 0 ? 0 : n / d);
         }
-        return count === 1 ? vals[0] ?? null : vals;
+        return count === 1 ? (vals[0] ?? null) : vals;
       }
       const R = {
-        1:(o)=>dv.getUint8(o), 3:(o)=>dv.getUint16(o,le),
-        4:(o)=>dv.getUint32(o,le), 6:(o)=>dv.getInt8(o),
-        8:(o)=>dv.getInt16(o,le), 9:(o)=>dv.getInt32(o,le),
+        1:(o)=>dv.getUint8(o),      3:(o)=>dv.getUint16(o,le),
+        4:(o)=>dv.getUint32(o,le),  6:(o)=>dv.getInt8(o),
+        8:(o)=>dv.getInt16(o,le),   9:(o)=>dv.getInt32(o,le),
       };
       const r = R[type]; if (!r) return null;
       const sz = TYPE_SIZE[type];
@@ -64,24 +69,26 @@ window.FrametaExif = (() => {
     } catch { return null; }
   }
 
-  /* ── IFD ───────────────────────────────────────────────── */
-  function readIFD(dv, ifdOff, le, tiffBase, depth, log) {
-    const out = {};
-    if (depth > 3) return out;
+  /* ── LÊ UM IFD — retorna {fields, nextIFD, subPointers} ── */
+  function readIFD(dv, ifdOff, le, tiffBase, log) {
+    const fields = {};
+    const subPointers = {}; // tagName → absolute offset
+
     if (ifdOff < 0 || ifdOff + 2 > dv.byteLength) {
-      log.push(`IFD[${depth}] offset ${ifdOff} fora dos limites (buf=${dv.byteLength})`);
-      return out;
+      log && log.push(`readIFD: offset ${ifdOff} inválido`);
+      return { fields, nextIFD: 0, subPointers };
     }
 
     let count;
     try { count = dv.getUint16(ifdOff, le); }
-    catch (e) { log.push(`IFD[${depth}] falha ao ler count: ${e.message}`); return out; }
+    catch { return { fields, nextIFD:0, subPointers }; }
 
-    log.push(`IFD[${depth}] @ ${ifdOff} → ${count} entradas`);
     if (count < 1 || count > 512) {
-      log.push(`IFD[${depth}] count inválido: ${count}`);
-      return out;
+      log && log.push(`readIFD @ ${ifdOff}: count=${count} inválido`);
+      return { fields, nextIFD:0, subPointers };
     }
+
+    log && log.push(`IFD @ ${ifdOff}: ${count} entradas`);
 
     for (let i = 0; i < count; i++) {
       const eOff = ifdOff + 2 + i * 12;
@@ -95,7 +102,7 @@ window.FrametaExif = (() => {
       } catch { continue; }
 
       const sz = TYPE_SIZE[type];
-      if (!sz || num < 1 || num > 65536) continue;
+      if (!sz || num < 1 || num > 100000) continue;
 
       const totalBytes = sz * num;
       let dataOff;
@@ -110,51 +117,89 @@ window.FrametaExif = (() => {
 
       const name = TAG[tagId];
 
-      if (name === '_ExifIFD') {
+      // Sub-IFD pointers — guarda para seguir depois
+      if (name === 'ExifIFD' || name === 'SubIFD' || name === 'GPSIFD') {
         let ptr;
         try { ptr = dv.getUint32(eOff + 8, le); } catch { continue; }
-        log.push(`→ ExifIFD pointer: ${tiffBase + ptr}`);
-        const sub = readIFD(dv, tiffBase + ptr, le, tiffBase, depth + 1, log);
-        Object.assign(out, sub);
+        if (name !== 'GPSIFD') {
+          subPointers[name] = tiffBase + ptr;
+          log && log.push(`  → ${name} pointer @ abs ${tiffBase + ptr}`);
+        }
         continue;
       }
 
-      if (!name || name.startsWith('_')) continue;
+      if (!name) continue;
 
       const val = readVal(dv, type, num, dataOff, le);
       if (val !== null && val !== undefined && val !== '') {
-        out[name] = val;
-        if (['Make','Model','ExposureTime','FNumber','ISO','FocalLength','LensModel'].includes(name)) {
-          log.push(`  tag 0x${tagId.toString(16)} ${name} = ${JSON.stringify(val)}`);
+        fields[name] = val;
+        if (['Make','Model','ExposureTime','FNumber','ISO',
+             'FocalLength','LensModel','DateTimeOriginal'].includes(name)) {
+          log && log.push(`  tag 0x${tagId.toString(16)} ${name} = ${JSON.stringify(val)}`);
         }
       }
     }
-    return out;
+
+    // Ponteiro para o próximo IFD (4 bytes após as entradas)
+    let nextIFD = 0;
+    const nextOff = ifdOff + 2 + count * 12;
+    if (nextOff + 4 <= dv.byteLength) {
+      try { nextIFD = dv.getUint32(nextOff, le); } catch { nextIFD = 0; }
+    }
+
+    return { fields, nextIFD, subPointers };
   }
 
-  /* ── TIFF ──────────────────────────────────────────────── */
+  /* ── PARSEIA TIFF COMPLETO — segue toda a chain ─────────── */
   function parseTIFF(dv, tiffBase, log) {
-    if (tiffBase + 8 > dv.byteLength) {
-      log.push(`TIFF base ${tiffBase} fora dos limites`); return null;
-    }
+    if (tiffBase + 8 > dv.byteLength) return null;
+
     let bo, magic, ifd0Off;
     try {
       bo      = dv.getUint16(tiffBase);
       magic   = dv.getUint16(tiffBase + 2, bo === 0x4949);
       ifd0Off = dv.getUint32(tiffBase + 4, bo === 0x4949);
-    } catch (e) { log.push('Falha cabeçalho TIFF: ' + e.message); return null; }
+    } catch { return null; }
 
     const le = bo === 0x4949;
-    const boStr = bo === 0x4949 ? 'LE(II)' : bo === 0x4D4D ? 'BE(MM)' : `0x${bo.toString(16)}`;
-    log.push(`TIFF @ ${tiffBase} | byteOrder=${boStr} | magic=${magic} | IFD0 @ ${tiffBase+ifd0Off}`);
+    const boStr = le ? 'LE(II)' : 'BE(MM)';
+    log.push(`TIFF @ ${tiffBase} | ${boStr} | magic=${magic} | IFD0 @ abs ${tiffBase + ifd0Off}`);
 
-    if (bo !== 0x4949 && bo !== 0x4D4D) { log.push('Byte order inválido'); return null; }
-    if (magic !== 42) { log.push(`Magic inválido: ${magic}`); return null; }
+    if (bo !== 0x4949 && bo !== 0x4D4D) return null;
+    if (magic !== 42) { log.push(`magic inválido: ${magic}`); return null; }
 
-    return readIFD(dv, tiffBase + ifd0Off, le, tiffBase, 0, log);
+    const merged = {};
+
+    // Segue a IFD chain: IFD0 → IFD1 → IFD2 ...
+    let currentOff = tiffBase + ifd0Off;
+    let chainDepth = 0;
+    const visitedIFDs = new Set();
+
+    while (currentOff > 0 && chainDepth < 8 && !visitedIFDs.has(currentOff)) {
+      visitedIFDs.add(currentOff);
+      const { fields, nextIFD, subPointers } = readIFD(dv, currentOff, le, tiffBase, log);
+      Object.assign(merged, fields);
+
+      // Processa ExifIFD e SubIFD
+      for (const [subName, subAbsOff] of Object.entries(subPointers)) {
+        if (!visitedIFDs.has(subAbsOff)) {
+          visitedIFDs.add(subAbsOff);
+          log.push(`Entrando em ${subName} @ ${subAbsOff}`);
+          const { fields: subFields } = readIFD(dv, subAbsOff, le, tiffBase, log);
+          Object.assign(merged, subFields); // Exif IFD tem prioridade sobre IFD0 para datas
+        }
+      }
+
+      // Avança para o próximo IFD na chain
+      currentOff = nextIFD > 0 ? tiffBase + nextIFD : 0;
+      chainDepth++;
+    }
+
+    log.push(`Campos extraídos: ${Object.keys(merged).join(', ') || 'nenhum'}`);
+    return merged;
   }
 
-  /* ── JPEG scanner ─────────────────────────────────────── */
+  /* ── SCAN JPEG ─────────────────────────────────────────── */
   function parseJPEG(dv) {
     const log = [];
     const len = dv.byteLength;
@@ -165,79 +210,54 @@ window.FrametaExif = (() => {
     }
 
     let off = 2;
-    let app1Count = 0;
-
     while (off < len - 3) {
       if (dv.getUint8(off) !== 0xFF) { off++; continue; }
       const marker = dv.getUint8(off + 1);
 
-      if (marker === 0xD8 || marker === 0xD9 ||
-          (marker >= 0xD0 && marker <= 0xD7)) { off += 2; continue; }
-      if (marker === 0x00) { off += 2; continue; }
+      if (marker === 0xD8||marker===0xD9||marker===0x00||
+          (marker>=0xD0&&marker<=0xD7)) { off+=2; continue; }
 
       if (off + 3 >= len) break;
       let segLen;
       try { segLen = dv.getUint16(off + 2); } catch { break; }
       if (segLen < 2) { off += 2; continue; }
 
-      const mHex = `0xFF${marker.toString(16).toUpperCase().padStart(2,'0')}`;
-      log.push(`Segmento ${mHex} @ ${off}, len=${segLen}`);
+      log.push(`Seg 0xFF${marker.toString(16).padStart(2,'0')} @ ${off} len=${segLen}`);
 
-      if (marker === 0xE1) {
-        app1Count++;
+      if (marker === 0xE1 && segLen > 10) {
         const dataStart = off + 4;
-        const dataEnd   = dataStart + segLen - 2;
-        if (dataStart + 6 < len) {
-          // Lê os primeiros bytes como hex para diagnóstico
-          const preview = Array.from({length: Math.min(16, segLen-2)},
-            (_,i) => dv.getUint8(dataStart+i).toString(16).padStart(2,'0')).join(' ');
-          log.push(`  APP1 dados: ${preview}`);
+        const hexPreview = Array.from({length:Math.min(20,segLen-2)},
+          (_,i)=>dv.getUint8(dataStart+i).toString(16).padStart(2,'0')).join(' ');
+        log.push(`  bytes: ${hexPreview}`);
 
-          // Tenta localizar "Exif" em posições flexíveis (0, 1, 2)
-          for (let skip = 0; skip <= 2; skip++) {
-            const base = dataStart + skip;
-            if (base + 4 >= len) continue;
-            const hdr = [0,1,2,3].map(j => {
-              const c = dv.getUint8(base + j);
-              return c >= 32 && c < 127 ? String.fromCharCode(c) : '?';
-            }).join('');
-            if (hdr === 'Exif') {
-              const tiffBase = base + 6; // pula "Exif\0\0"
-              log.push(`  → "Exif" encontrado @ ${base} (skip=${skip}), TIFF @ ${tiffBase}`);
-              const raw = parseTIFF(dv, tiffBase, log);
-              if (raw) {
-                raw._ok  = true;
-                raw._log = log;
-                return raw;
-              }
-            }
-          }
-
-          // Tenta também procurar "Exif" dentro dos primeiros 64 bytes do segmento
-          for (let s = 0; s < Math.min(64, segLen - 10); s++) {
-            const base = dataStart + s;
-            if (base + 4 >= len) break;
-            const a = dv.getUint8(base),   b = dv.getUint8(base+1),
-                  c = dv.getUint8(base+2), d = dv.getUint8(base+3);
-            if (a===0x45 && b===0x78 && c===0x69 && d===0x66) { // "Exif"
-              const tiffBase = base + 6;
-              log.push(`  → "Exif" encontrado por scan @ ${base}, TIFF @ ${tiffBase}`);
-              const raw = parseTIFF(dv, tiffBase, log);
-              if (raw) { raw._ok=true; raw._log=log; return raw; }
+        // Procura "Exif" nos primeiros 64 bytes do segmento
+        const searchLen = Math.min(64, segLen - 10);
+        for (let s = 0; s <= searchLen; s++) {
+          const b = dataStart + s;
+          if (b + 4 >= len) break;
+          if (dv.getUint8(b)===0x45 && dv.getUint8(b+1)===0x78 &&
+              dv.getUint8(b+2)===0x69 && dv.getUint8(b+3)===0x66) {
+            // Encontrou "Exif" — TIFF começa após "Exif\0\0" (6 bytes)
+            const tiffBase = b + 6;
+            log.push(`"Exif" @ ${b}, TIFF @ ${tiffBase}`);
+            const raw = parseTIFF(dv, tiffBase, log);
+            if (raw) {
+              raw._ok  = true;
+              raw._log = log;
+              return raw;
             }
           }
         }
       }
 
-      if (marker === 0xDA) break; // SOS
+      if (marker === 0xDA) break;
       off += 2 + segLen;
     }
 
-    log.push(`APP1 encontrados: ${app1Count}, EXIF não extraído`);
     return { _error:'EXIF não encontrado', _log:log };
   }
 
-  /* ── parse(file) ───────────────────────────────────────── */
+  /* ── parse(file) → Promise ─────────────────────────────── */
   function parse(file) {
     return new Promise(resolve => {
       if (!file) { resolve({_error:'Sem arquivo',_log:[]}); return; }
@@ -247,7 +267,8 @@ window.FrametaExif = (() => {
         catch(e) { resolve({_error:'Exceção: '+e.message,_log:[]}); }
       };
       r.onerror = () => resolve({_error:'FileReader falhou',_log:[]});
-      r.readAsArrayBuffer(file.slice(0, 1048576)); // 1MB
+      // 1MB — suficiente para EXIF (que fica sempre no início)
+      r.readAsArrayBuffer(file.slice(0, 1048576));
     });
   }
 
@@ -268,8 +289,7 @@ window.FrametaExif = (() => {
   }
   function fmtDate(v) {
     if (!v) return null;
-    const s = String(v);
-    const m = s.match(/^(\d{4})[:\-\/](\d{2})[:\-\/](\d{2})/);
+    const m = String(v).match(/^(\d{4})[:\-\/](\d{2})[:\-\/](\d{2})/);
     return m ? `${m[3]}/${m[2]}/${m[1]}` : null;
   }
   function fmtCamera(raw) {
@@ -283,10 +303,9 @@ window.FrametaExif = (() => {
   /* ── extract(raw) ──────────────────────────────────────── */
   function extract(raw) {
     if (!raw || !raw._ok) {
-      return { ok:false, error: raw?._error || 'Falha no parse',
-               fields:{}, _raw:raw, _log: raw?._log || [] };
+      return { ok:false, error:raw?._error||'Falha', fields:{}, _raw:raw, _log:raw?._log||[] };
     }
-    const clean = s => s ? String(s).replace(/\0/g,'').trim() || null : null;
+    const clean = s => s ? String(s).replace(/\0/g,'').trim()||null : null;
     const fields = {
       camera:   fmtCamera(raw),
       lens:     clean(raw.LensModel || raw.LensMake),
@@ -302,7 +321,7 @@ window.FrametaExif = (() => {
     return {
       ok: hasAny,
       error: hasAny ? null : 'EXIF presente, mas sem campos de câmera',
-      fields, _raw: raw, _log: raw._log || [],
+      fields, _raw:raw, _log:raw._log||[],
     };
   }
 
