@@ -58,6 +58,7 @@ window.FrametaRender = (() => {
       fmt         = 'original',
       font        = 'sans',
       overlaySize = 'md',
+      fontScale   = 1.0,
       visible     = {},
       order       = ['camera','lens','shutter','aperture','iso','focal','date'],
     } = opts;
@@ -109,8 +110,8 @@ window.FrametaRender = (() => {
       const scale = OVERLAY_SCALE[overlaySize] || 1.0;
 
       // Tamanho base proporcional à largura da imagem
-      const baseFs   = Math.max(13, Math.round(cropW * 0.022)) * scale;
-      const labelFs  = Math.max(9,  Math.round(cropW * 0.014)) * scale;
+      const baseFs   = Math.max(13, Math.round(cropW * 0.022)) * scale * fontScale;
+      const labelFs  = Math.max(9,  Math.round(cropW * 0.014)) * scale * fontScale;
       const pillPadX = Math.round(baseFs * 0.75);
       const pillPadY = Math.round(baseFs * 0.38);
       const pillGap  = Math.round(baseFs * 0.28);
@@ -201,6 +202,29 @@ window.FrametaRender = (() => {
 
         currentY += item.ph + pillGap;
       });
+
+      // Pill obrigatório de marca — sempre ao final, não removível
+      const brandText = 'frameta.vercel.app';
+      const brandFs   = Math.max(9, Math.round(baseFs * 0.62));
+      ctx.font = `300 ${brandFs}px ${fontFam}`;
+      const brandTw  = ctx.measureText(brandText).width;
+      const brandPadX = Math.round(brandFs * 0.7);
+      const brandPadY = Math.round(brandFs * 0.32);
+      const brandW    = brandTw + brandPadX * 2;
+      const brandH    = brandFs + brandPadY * 2;
+      const brandRad  = Math.round(brandFs * 0.4);
+      const brandGap  = Math.round(pillGap * 1.6);
+
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      pill(ctx, blockX, currentY + brandGap, brandW, brandH, brandRad);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth   = 1;
+      pill(ctx, blockX, currentY + brandGap, brandW, brandH, brandRad);
+      ctx.stroke();
+      ctx.font      = `300 ${brandFs}px ${fontFam}`;
+      ctx.fillStyle = 'rgba(255,255,255,0.55)';
+      ctx.fillText(brandText, blockX + brandPadX, currentY + brandGap + brandH / 2);
 
       // Marca frameta discreta
       const wmFs = Math.max(9, Math.round(baseFs * 0.55));

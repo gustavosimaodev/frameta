@@ -6,20 +6,12 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 
 ## [Unreleased]
 
-### v0.5.0 — Canvas interativo com crop e posicionamento
-> Prioridade alta. Permite ao usuário reposicionar e escalar a imagem dentro do canvas ao mudar o formato de exportação (1:1, 4:5, 9:16 etc.), em vez do crop automático centralizado atual.
+### v0.6.0 — Canvas interativo com crop e posicionamento
+> Permite ao usuário reposicionar e escalar a imagem dentro do canvas ao mudar o formato de exportação (1:1, 4:5, 9:16 etc.), em vez do crop automático centralizado atual.
 - [ ] Canvas secundário interativo com handles de arrastar e redimensionar
 - [ ] Preview do recorte em tempo real ao mudar o formato
 - [ ] Botão "centralizar" para voltar ao crop automático
 - [ ] Zoom in/out com scroll ou pinch
-
-### v0.6.0 — Refinamento de UX do sidebar
-> Consolidação e simplificação dos controles do painel lateral.
-- [ ] Unificar "Campos visíveis" e "Ordem dos campos" em um único painel — cada campo com toggle de visibilidade à esquerda e handle de drag-and-drop à direita, tudo na mesma linha
-- [ ] Painel de metadados colapsável (estilo "Raw EXIF debug") — minimizável com um clique para liberar espaço no sidebar
-- [ ] Controle de tamanho de fonte das informações do overlay (slider ou botões XS/S/M/L/XL) — separado do tamanho geral do bloco overlay
-- [ ] Mover controle de tamanho do overlay para dentro do mesmo painel dos campos, evitando seção separada
-- [ ] Pill de marca obrigatória ao final da coluna de overlay com o texto "by frameta.vercel.app" — não removível pelo usuário, estilo consistente com os demais pills
 
 ### v0.7.0 — Batch mode (múltiplas fotos)
 > Permitir carregar diversas imagens em uma única sessão, percorrer cada uma individualmente para previsualização e ajuste fino, e exportar todas com o mesmo conjunto de configurações de overlay aplicado em massa.
@@ -44,6 +36,41 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 - [ ] Leitura nativa EXIF via platform channels
 - [ ] Share sheet integration
 - [ ] Batch mode nativo com acesso ao rolo de câmera
+
+### Lightroom Plugin
+- [ ] Scaffold Lua com Lightroom SDK
+- [ ] Leitura de metadados do catálogo na exportação
+- [ ] Preset de overlay salvo por perfil
+
+### Infra
+- [ ] Domínio próprio (frameta.com / frameta.app)
+- [ ] Analytics privacy-first (Plausible)
+- [ ] PWA — instalável como app no desktop e mobile
+
+---
+
+## [0.5.0] — 2026-04-11
+
+UX consolidada: sidebar compacto, campos unificados, slider de fonte, pill de marca, página Sobre completa.
+
+### Added
+- Botão "Baixar foto" movido para logo abaixo do botão "Abrir foto" — sem necessidade de rolar o sidebar
+- Seção "Campos e ordem" unificada: drag-and-drop e toggle de visibilidade na mesma linha por campo, com header colapsável
+- Slider de tamanho de fonte do overlay (60% a 160%) — controle independente do tamanho geral do bloco
+- Pill obrigatório "frameta.vercel.app" ao final do bloco overlay — não removível, estilo discreto diferenciado dos demais pills
+- Página "Sobre" expandida com seção **Fale conosco** — links para Instagram, Facebook e LinkedIn com ícones SVG, abertura em nova aba
+- Seção **Sugestões** na página "Sobre" — formulário funcional via Formspree (`mkopdybv`), sem backend próprio
+- WhatsApp omitido por decisão do autor — pode ser adicionado futuramente
+
+### Changed
+- Sidebar reestruturado para eliminar scroll na maioria das resoluções
+- Seção "Tamanho overlay" agora inclui o slider de fonte, consolidando controles relacionados
+- Roadmap da página "Sobre" atualizado para refletir versões planejadas reais
+- Crédito no rodapé da página Sobre agora inclui link para frameta.vercel.app
+
+### Removed
+- Painel "Campos visíveis" separado no painel direito — substituído pelo painel unificado no sidebar
+- Função `buildToggles()` dinâmica — substituída por toggles estáticos no HTML com listeners diretos
 
 ### Lightroom Plugin
 - [ ] Scaffold Lua com Lightroom SDK

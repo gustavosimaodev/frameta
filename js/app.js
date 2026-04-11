@@ -25,6 +25,7 @@
     order: ['camera','lens','shutter','aperture','iso','focal','date'],
     style:       'overlay',
     overlaySize: 'md',
+    fontScale:   1.0,
     pos:         'bl',
     fmt:         'original',
     font:        'sans',
@@ -47,8 +48,6 @@
   const exifData        = $('exifData');
   const exifStatus      = $('exifStatus');
   const exifList        = $('exifList');
-  const toggleTitle     = $('toggleTitle');
-  const toggleList      = $('toggleList');
   const toast           = $('toast');
 
   /* -------------------------------------------------------
@@ -94,6 +93,42 @@
     sec.classList.toggle('hidden', state.style !== 'overlay');
   }
   updateOverlaySizeVisibility();
+
+  /* -------------------------------------------------------
+     SLIDER DE TAMANHO DE FONTE
+  ------------------------------------------------------- */
+  const fontSizeSlider = $('fontSizeSlider');
+  const fontSizeVal    = $('fontSizeVal');
+  if (fontSizeSlider) {
+    fontSizeSlider.addEventListener('input', () => {
+      state.fontScale = parseInt(fontSizeSlider.value) / 100;
+      fontSizeVal.textContent = fontSizeSlider.value + '%';
+      render();
+    });
+  }
+
+  /* -------------------------------------------------------
+     COLAPSÁVEL — campos e ordem
+  ------------------------------------------------------- */
+  const fieldsToggle = $('fieldsToggle');
+  const orderList    = $('orderList');
+  if (fieldsToggle && orderList) {
+    fieldsToggle.addEventListener('click', () => {
+      fieldsToggle.classList.toggle('collapsed');
+      orderList.classList.toggle('collapsed');
+    });
+  }
+
+  /* -------------------------------------------------------
+     FIELD TOGGLES unificados (dentro da order-list)
+  ------------------------------------------------------- */
+  document.querySelectorAll('.field-toggle').forEach(chk => {
+    chk.addEventListener('change', () => {
+      const key = chk.dataset.field;
+      state.visible[key] = chk.checked;
+      render();
+    });
+  });
 
   /* -------------------------------------------------------
      TEMA DA INTERFACE
@@ -242,14 +277,11 @@
       // 3. Atualiza painel EXIF
       updateExifPanel(result);
 
-      // 4. Inicializa toggles se ainda não existirem
-      buildToggles();
-
-      // 5. Renderiza
+      // 4. Renderiza
       render();
       exportBtn.disabled = false;
 
-      // 6. Mostra preview
+      // 5. Mostra preview
       emptyState.style.display      = 'none';
       previewContainer.style.display = 'flex';
 
@@ -339,58 +371,6 @@
   }
 
   /* -------------------------------------------------------
-     TOGGLES DE CAMPOS
-  ------------------------------------------------------- */
-  let togglesBuilt = false;
-
-  function buildToggles() {
-    if (togglesBuilt) return;
-    togglesBuilt = true;
-
-    toggleTitle.style.display = 'block';
-    toggleList.innerHTML = '';
-
-    const TOGGLE_DEFS = [
-      { key: 'camera',   label: 'Câmera' },
-      { key: 'lens',     label: 'Lente' },
-      { key: 'shutter',  label: 'Velocidade' },
-      { key: 'aperture', label: 'Abertura' },
-      { key: 'iso',      label: 'ISO' },
-      { key: 'focal',    label: 'Focal' },
-      { key: 'date',     label: 'Data' },
-    ];
-
-    TOGGLE_DEFS.forEach(({ key, label }) => {
-      const row = document.createElement('div');
-      row.className = 'toggle-row';
-
-      const lbl = document.createElement('span');
-      lbl.className = 'toggle-label';
-      lbl.textContent = label;
-
-      const wrap = document.createElement('label');
-      wrap.className = 'toggle-wrap';
-
-      const input = document.createElement('input');
-      input.type    = 'checkbox';
-      input.checked = state.visible[key] !== false;
-      input.addEventListener('change', () => {
-        state.visible[key] = input.checked;
-        render();
-      });
-
-      const slider = document.createElement('span');
-      slider.className = 'toggle-slider';
-
-      wrap.appendChild(input);
-      wrap.appendChild(slider);
-      row.appendChild(lbl);
-      row.appendChild(wrap);
-      toggleList.appendChild(row);
-    });
-  }
-
-  /* -------------------------------------------------------
      RENDERIZAÇÃO
   ------------------------------------------------------- */
   function render() {
@@ -401,6 +381,7 @@
       fmt:         state.fmt,
       font:        state.font,
       overlaySize: state.overlaySize,
+      fontScale:   state.fontScale,
       order:       state.order,
       visible:     state.visible,
     });

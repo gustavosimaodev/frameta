@@ -11,11 +11,10 @@
 </head>
 <body>
 
-  <!-- HEADER -->
   <header class="header">
     <div class="header-brand">
       <div class="brand-mark">
-        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
           <rect x="2" y="6" width="24" height="17" rx="3" stroke="currentColor" stroke-width="1.5"/>
           <circle cx="14" cy="14.5" r="4.5" stroke="currentColor" stroke-width="1.5"/>
           <circle cx="14" cy="14.5" r="2" fill="currentColor"/>
@@ -37,17 +36,17 @@
     </div>
   </header>
 
-  <!-- MAIN APP -->
+  <!-- EDITOR -->
   <div class="app" id="tabEditor">
 
-    <!-- SIDEBAR ESQUERDA -->
     <aside class="sidebar">
 
+      <!-- UPLOAD -->
       <section class="sidebar-section">
         <label class="upload-zone" id="uploadZone">
           <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/tiff,image/webp,image/heic" hidden />
           <div class="upload-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
               <polyline points="17 8 12 3 7 8"/>
               <line x1="12" y1="3" x2="12" y2="15"/>
@@ -56,8 +55,18 @@
           <span class="upload-label">Abrir foto</span>
           <span class="upload-sub">JPEG · PNG · TIFF · WebP</span>
         </label>
+        <!-- DOWNLOAD logo abaixo do upload -->
+        <button class="export-btn" id="exportBtn" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7 10 12 15 17 10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          Baixar foto
+        </button>
       </section>
 
+      <!-- ESTILO -->
       <section class="sidebar-section">
         <div class="section-title">Estilo</div>
         <div class="option-group" id="styleGroup">
@@ -67,6 +76,7 @@
         </div>
       </section>
 
+      <!-- TAMANHO OVERLAY -->
       <section class="sidebar-section" id="overlaySizeSection">
         <div class="section-title">Tamanho overlay</div>
         <div class="option-group" id="overlaySizeGroup">
@@ -74,8 +84,15 @@
           <button class="opt-btn active" data-value="md">M</button>
           <button class="opt-btn" data-value="lg">G</button>
         </div>
+        <!-- SLIDER DE FONTE -->
+        <div class="font-size-row">
+          <span class="font-size-label">Fonte</span>
+          <input type="range" id="fontSizeSlider" min="60" max="160" value="100" step="5" />
+          <span class="font-size-val" id="fontSizeVal">100%</span>
+        </div>
       </section>
 
+      <!-- POSIÇÃO -->
       <section class="sidebar-section">
         <div class="section-title">Posição</div>
         <div class="pos-grid" id="posGroup">
@@ -91,30 +108,20 @@
         </div>
       </section>
 
+      <!-- FORMATO -->
       <section class="sidebar-section">
         <div class="section-title">Formato</div>
         <div class="fmt-grid" id="fmtGroup">
-          <button class="fmt-btn active" data-value="original">
-            Original
-          </button>
-          <button class="fmt-btn" data-value="1:1">
-            1:1 <small>Feed</small>
-          </button>
-          <button class="fmt-btn" data-value="4:5">
-            4:5 <small>Portrait</small>
-          </button>
-          <button class="fmt-btn" data-value="9:16">
-            9:16 <small>Story</small>
-          </button>
-          <button class="fmt-btn" data-value="16:9">
-            16:9 <small>Wide</small>
-          </button>
-          <button class="fmt-btn" data-value="1.91:1">
-            1.91:1 <small>Twitter</small>
-          </button>
+          <button class="fmt-btn active" data-value="original">Original</button>
+          <button class="fmt-btn" data-value="1:1">1:1 <small>Feed</small></button>
+          <button class="fmt-btn" data-value="4:5">4:5 <small>Portrait</small></button>
+          <button class="fmt-btn" data-value="9:16">9:16 <small>Story</small></button>
+          <button class="fmt-btn" data-value="16:9">16:9 <small>Wide</small></button>
+          <button class="fmt-btn" data-value="1.91:1">1.91:1 <small>Twitter</small></button>
         </div>
       </section>
 
+      <!-- FONTE -->
       <section class="sidebar-section">
         <div class="section-title">Fonte</div>
         <div class="option-group" id="fontGroup">
@@ -124,55 +131,85 @@
         </div>
       </section>
 
+      <!-- CAMPOS + ORDEM unificados, colapsável -->
       <section class="sidebar-section">
-        <div class="section-title">Ordem dos campos</div>
+        <button class="collapsible-header" id="fieldsToggle">
+          <span class="section-title" style="margin:0">Campos e ordem</span>
+          <span class="collapse-icon">▾</span>
+        </button>
         <ul class="order-list" id="orderList">
           <li class="order-item" data-key="camera">
-            <span class="drag-handle">⠿</span><span class="order-label">Câmera</span>
+            <span class="drag-handle">⠿</span>
+            <span class="order-label">Câmera</span>
+            <label class="toggle-wrap" style="margin-left:auto">
+              <input type="checkbox" data-field="camera" checked class="field-toggle" />
+              <span class="toggle-slider"></span>
+            </label>
           </li>
           <li class="order-item" data-key="lens">
-            <span class="drag-handle">⠿</span><span class="order-label">Lente</span>
+            <span class="drag-handle">⠿</span>
+            <span class="order-label">Lente</span>
+            <label class="toggle-wrap" style="margin-left:auto">
+              <input type="checkbox" data-field="lens" checked class="field-toggle" />
+              <span class="toggle-slider"></span>
+            </label>
           </li>
           <li class="order-item" data-key="shutter">
-            <span class="drag-handle">⠿</span><span class="order-label">Velocidade</span>
+            <span class="drag-handle">⠿</span>
+            <span class="order-label">Velocidade</span>
+            <label class="toggle-wrap" style="margin-left:auto">
+              <input type="checkbox" data-field="shutter" checked class="field-toggle" />
+              <span class="toggle-slider"></span>
+            </label>
           </li>
           <li class="order-item" data-key="aperture">
-            <span class="drag-handle">⠿</span><span class="order-label">Abertura</span>
+            <span class="drag-handle">⠿</span>
+            <span class="order-label">Abertura</span>
+            <label class="toggle-wrap" style="margin-left:auto">
+              <input type="checkbox" data-field="aperture" checked class="field-toggle" />
+              <span class="toggle-slider"></span>
+            </label>
           </li>
           <li class="order-item" data-key="iso">
-            <span class="drag-handle">⠿</span><span class="order-label">ISO</span>
+            <span class="drag-handle">⠿</span>
+            <span class="order-label">ISO</span>
+            <label class="toggle-wrap" style="margin-left:auto">
+              <input type="checkbox" data-field="iso" checked class="field-toggle" />
+              <span class="toggle-slider"></span>
+            </label>
           </li>
           <li class="order-item" data-key="focal">
-            <span class="drag-handle">⠿</span><span class="order-label">Focal</span>
+            <span class="drag-handle">⠿</span>
+            <span class="order-label">Focal</span>
+            <label class="toggle-wrap" style="margin-left:auto">
+              <input type="checkbox" data-field="focal" checked class="field-toggle" />
+              <span class="toggle-slider"></span>
+            </label>
           </li>
           <li class="order-item" data-key="date">
-            <span class="drag-handle">⠿</span><span class="order-label">Data</span>
+            <span class="drag-handle">⠿</span>
+            <span class="order-label">Data</span>
+            <label class="toggle-wrap" style="margin-left:auto">
+              <input type="checkbox" data-field="date" class="field-toggle" />
+              <span class="toggle-slider"></span>
+            </label>
           </li>
         </ul>
       </section>
 
+      <!-- TEMA -->
       <section class="sidebar-section">
-        <div class="section-title">Tema da interface</div>
+        <div class="section-title">Tema</div>
         <div class="option-group" id="themeGroup">
           <button class="opt-btn" data-value="light" title="Claro">☀</button>
           <button class="opt-btn active" data-value="system" title="Sistema">⊙</button>
           <button class="opt-btn" data-value="dark" title="Escuro">☽</button>
         </div>
-
-      <div class="sidebar-spacer"></div>
-
-      <button class="export-btn" id="exportBtn" disabled>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-          <polyline points="7 10 12 15 17 10"/>
-          <line x1="12" y1="15" x2="12" y2="3"/>
-        </svg>
-        Baixar foto
-      </button>
+      </section>
 
     </aside>
 
-    <!-- ÁREA CENTRAL -->
+    <!-- WORKSPACE -->
     <main class="workspace" id="workspace">
       <div class="drop-overlay" id="dropOverlay">
         <div class="drop-overlay-inner">
@@ -183,7 +220,6 @@
           <span>Solte a foto aqui</span>
         </div>
       </div>
-
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">
           <svg width="48" height="48" viewBox="0 0 28 28" fill="none">
@@ -197,32 +233,23 @@
         <p class="empty-sub">ou use o botão <em>Abrir foto</em> na barra lateral</p>
         <p class="empty-formats">JPEG · PNG · TIFF · WebP</p>
       </div>
-
       <div class="preview-container" id="previewContainer" style="display:none">
         <canvas id="mainCanvas"></canvas>
       </div>
     </main>
 
-    <!-- PAINEL DIREITO: EXIF -->
+    <!-- PAINEL EXIF -->
     <aside class="exif-panel" id="exifPanel">
       <div class="section-title">Metadados</div>
-
-      <div class="exif-empty" id="exifEmpty">
-        Carregue uma foto para ver os dados EXIF detectados.
-      </div>
-
+      <div class="exif-empty" id="exifEmpty">Carregue uma foto para ver os dados EXIF detectados.</div>
       <div class="exif-data" id="exifData" style="display:none">
         <div class="exif-status" id="exifStatus"></div>
         <div class="exif-list" id="exifList"></div>
       </div>
-
       <details id="debugBlock" style="display:none;margin-top:16px">
         <summary style="font-size:9px;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:#b0b0b0;cursor:pointer;user-select:none">▸ Raw EXIF debug</summary>
         <pre id="debugPre" style="font-size:9px;font-family:'DM Mono',monospace;color:#787878;margin-top:8px;white-space:pre-wrap;word-break:break-all;line-height:1.5;max-height:300px;overflow-y:auto"></pre>
       </details>
-
-      <div class="section-title" id="toggleTitle" style="margin-top:24px;display:none">Campos visíveis</div>
-      <div class="toggle-list" id="toggleList"></div>
     </aside>
 
   </div>
@@ -232,27 +259,67 @@
     <div class="about-inner">
       <h1>Frameta</h1>
       <p class="about-lead">Uma ferramenta para fotógrafos que querem compartilhar não só a imagem, mas o processo por trás dela.</p>
+
       <div class="about-grid">
         <div class="about-card">
           <div class="about-card-title">Como funciona</div>
-          <p>Faça upload de qualquer JPEG, PNG ou TIFF. O Frameta lê automaticamente os dados EXIF gravados pela câmera e os renderiza como uma barra tipográfica limpa, exportável nos principais formatos de redes sociais.</p>
+          <p>Faça upload de qualquer JPEG, PNG ou TIFF. O Frameta lê automaticamente os dados EXIF gravados pela câmera e os renderiza como overlay diretamente sobre a imagem, exportável nos principais formatos de redes sociais.</p>
         </div>
         <div class="about-card">
           <div class="about-card-title">Privacidade</div>
-          <p>Nenhum arquivo é enviado a servidores. Todo o processamento acontece localmente no seu navegador. Seus metadados de localização nunca são exibidos.</p>
+          <p>Nenhum arquivo é enviado a servidores. Todo o processamento acontece localmente no seu navegador. Dados de localização GPS nunca são exibidos.</p>
         </div>
         <div class="about-card">
           <div class="about-card-title">Roadmap</div>
-          <p>v0.1 — Web (atual)<br>v0.2 — Batch mode + logo própria<br>v0.3 — Plugin Lightroom<br>v1.0 — App Flutter (iOS + Android)</p>
+          <p>v0.5 — Canvas interativo com crop<br>v0.6 — Refinamentos de UX<br>v0.7 — Batch mode<br>v1.0 — App mobile + Plugin Lightroom</p>
         </div>
       </div>
+
+      <!-- FALE CONOSCO -->
+      <div class="about-contact">
+        <div class="about-section-title">Fale conosco</div>
+        <div class="contact-links">
+          <a href="https://instagram.com/gsimao14" target="_blank" rel="noopener" class="contact-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/>
+              <circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+            </svg>
+            Instagram
+          </a>
+          <a href="https://www.facebook.com/profile.php?id=61585513822731" target="_blank" rel="noopener" class="contact-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
+            </svg>
+            Facebook
+          </a>
+          <a href="https://www.linkedin.com/in/gustavo-sim%C3%A3o-94723828/" target="_blank" rel="noopener" class="contact-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/>
+              <rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/>
+            </svg>
+            LinkedIn
+          </a>
+        </div>
+      </div>
+
+      <!-- SUGESTÕES -->
+      <div class="about-suggest">
+        <div class="about-section-title">Deixe sua sugestão</div>
+        <p class="suggest-sub">Tem uma ideia para melhorar o Frameta? Conta pra gente.</p>
+        <form class="suggest-form" action="https://formspree.io/f/mkopdybv" method="POST">
+          <input type="text" name="name" placeholder="Seu nome (opcional)" class="suggest-input" />
+          <textarea name="message" placeholder="Sua sugestão..." class="suggest-textarea" required></textarea>
+          <button type="submit" class="suggest-btn">Enviar sugestão</button>
+        </form>
+      </div>
+
       <div class="about-credit">
-        Desenvolvido por <strong>Gustavo de Morais Simão</strong>
+        Desenvolvido por <strong>Gustavo de Morais Simão</strong> ·
+        <a href="https://frameta.vercel.app" target="_blank" rel="noopener" class="credit-link">frameta.vercel.app</a>
       </div>
     </div>
   </div>
 
-  <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
   <script src="js/exif.js"></script>
