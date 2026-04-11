@@ -61,24 +61,18 @@
       <section class="sidebar-section">
         <div class="section-title">Estilo</div>
         <div class="option-group" id="styleGroup">
-          <button class="opt-btn active" data-value="overlay">
-            Overlay
-          </button>
-          <button class="opt-btn" data-value="white">
-            Branco
-          </button>
-          <button class="opt-btn" data-value="dark">
-            Escuro
-          </button>
+          <button class="opt-btn active" data-value="overlay">Overlay</button>
+          <button class="opt-btn" data-value="white">Branco</button>
+          <button class="opt-btn" data-value="dark">Escuro</button>
         </div>
       </section>
 
-      <section class="sidebar-section">
-        <div class="section-title">Tema da interface</div>
-        <div class="option-group" id="themeGroup">
-          <button class="opt-btn" data-value="light" title="Claro">☀</button>
-          <button class="opt-btn active" data-value="system" title="Sistema">⊙</button>
-          <button class="opt-btn" data-value="dark" title="Escuro">☽</button>
+      <section class="sidebar-section" id="overlaySizeSection">
+        <div class="section-title">Tamanho overlay</div>
+        <div class="option-group" id="overlaySizeGroup">
+          <button class="opt-btn" data-value="sm">P</button>
+          <button class="opt-btn active" data-value="md">M</button>
+          <button class="opt-btn" data-value="lg">G</button>
         </div>
       </section>
 
@@ -129,6 +123,41 @@
           <button class="opt-btn" data-value="serif" style="font-family:Georgia,serif">Serif</button>
         </div>
       </section>
+
+      <section class="sidebar-section">
+        <div class="section-title">Ordem dos campos</div>
+        <ul class="order-list" id="orderList">
+          <li class="order-item" data-key="camera">
+            <span class="drag-handle">⠿</span><span class="order-label">Câmera</span>
+          </li>
+          <li class="order-item" data-key="lens">
+            <span class="drag-handle">⠿</span><span class="order-label">Lente</span>
+          </li>
+          <li class="order-item" data-key="shutter">
+            <span class="drag-handle">⠿</span><span class="order-label">Velocidade</span>
+          </li>
+          <li class="order-item" data-key="aperture">
+            <span class="drag-handle">⠿</span><span class="order-label">Abertura</span>
+          </li>
+          <li class="order-item" data-key="iso">
+            <span class="drag-handle">⠿</span><span class="order-label">ISO</span>
+          </li>
+          <li class="order-item" data-key="focal">
+            <span class="drag-handle">⠿</span><span class="order-label">Focal</span>
+          </li>
+          <li class="order-item" data-key="date">
+            <span class="drag-handle">⠿</span><span class="order-label">Data</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="sidebar-section">
+        <div class="section-title">Tema da interface</div>
+        <div class="option-group" id="themeGroup">
+          <button class="opt-btn" data-value="light" title="Claro">☀</button>
+          <button class="opt-btn active" data-value="system" title="Sistema">⊙</button>
+          <button class="opt-btn" data-value="dark" title="Escuro">☽</button>
+        </div>
 
       <div class="sidebar-spacer"></div>
 

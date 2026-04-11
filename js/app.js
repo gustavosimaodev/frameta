@@ -22,10 +22,12 @@
       focal:    true,
       date:     false,
     },
-    style: 'overlay',
-    pos:   'bl',
-    fmt:   'original',
-    font:  'sans',
+    order: ['camera','lens','shutter','aperture','iso','focal','date'],
+    style:       'overlay',
+    overlaySize: 'md',
+    pos:         'bl',
+    fmt:         'original',
+    font:        'sans',
   };
 
   /* -------------------------------------------------------
@@ -79,10 +81,19 @@
     });
   }
 
-  setupGroup('styleGroup', 'style');
-  setupGroup('posGroup',   'pos');
-  setupGroup('fmtGroup',   'fmt');
-  setupGroup('fontGroup',  'font');
+  setupGroup('styleGroup',      'style',       updateOverlaySizeVisibility);
+  setupGroup('posGroup',        'pos');
+  setupGroup('fmtGroup',        'fmt');
+  setupGroup('fontGroup',       'font');
+  setupGroup('overlaySizeGroup','overlaySize');
+
+  /* Mostra/esconde seção de tamanho conforme o estilo */
+  function updateOverlaySizeVisibility() {
+    const sec = document.getElementById('overlaySizeSection');
+    if (!sec) return;
+    sec.classList.toggle('hidden', state.style !== 'overlay');
+  }
+  updateOverlaySizeVisibility();
 
   /* -------------------------------------------------------
      TEMA DA INTERFACE
@@ -119,6 +130,51 @@
       });
     });
   }
+
+  /* -------------------------------------------------------
+     DRAG AND DROP — reordenação dos campos
+  ------------------------------------------------------- */
+  (function initOrderDrag() {
+    const list = document.getElementById('orderList');
+    if (!list) return;
+    let dragSrc = null;
+
+    list.querySelectorAll('.order-item').forEach(item => {
+      item.setAttribute('draggable', 'true');
+
+      item.addEventListener('dragstart', e => {
+        dragSrc = item;
+        item.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+      });
+
+      item.addEventListener('dragend', () => {
+        item.classList.remove('dragging');
+        list.querySelectorAll('.order-item').forEach(i => i.classList.remove('drag-over'));
+        state.order = Array.from(list.querySelectorAll('.order-item')).map(i => i.dataset.key);
+        render();
+      });
+
+      item.addEventListener('dragover', e => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (item !== dragSrc) {
+          list.querySelectorAll('.order-item').forEach(i => i.classList.remove('drag-over'));
+          item.classList.add('drag-over');
+        }
+      });
+
+      item.addEventListener('drop', e => {
+        e.preventDefault();
+        if (dragSrc && dragSrc !== item) {
+          const items  = Array.from(list.querySelectorAll('.order-item'));
+          const srcIdx = items.indexOf(dragSrc);
+          const tgtIdx = items.indexOf(item);
+          list.insertBefore(dragSrc, srcIdx < tgtIdx ? item.nextSibling : item);
+        }
+      });
+    });
+  })();
 
   /* -------------------------------------------------------
      UPLOAD — FILE INPUT
@@ -340,11 +396,13 @@
   function render() {
     if (!state.img) return;
     window.FrametaRender.draw(mainCanvas, state.img, state.fields, {
-      style:   state.style,
-      pos:     state.pos,
-      fmt:     state.fmt,
-      font:    state.font,
-      visible: state.visible,
+      style:       state.style,
+      pos:         state.pos,
+      fmt:         state.fmt,
+      font:        state.font,
+      overlaySize: state.overlaySize,
+      order:       state.order,
+      visible:     state.visible,
     });
   }
 

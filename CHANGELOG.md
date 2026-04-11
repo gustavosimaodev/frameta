@@ -6,18 +6,46 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 
 ## [Unreleased]
 
-### Web
-- [ ] Canvas redimensionável com imagem arrastável dentro do formato de rede social
-- [ ] Batch mode (múltiplas fotos)
-- [ ] Upload de logo própria na barra
-- [ ] Color picker para fundo e texto
-- [ ] Salvar preferências no localStorage
-- [ ] Export em PNG
-- [ ] Web Share API (compartilhar direto)
+### v0.5.0 — Canvas interativo com crop e posicionamento
+> Prioridade alta. Permite ao usuário reposicionar e escalar a imagem dentro do canvas ao mudar o formato de exportação (1:1, 4:5, 9:16 etc.), em vez do crop automático centralizado atual.
+- [ ] Canvas secundário interativo com handles de arrastar e redimensionar
+- [ ] Preview do recorte em tempo real ao mudar o formato
+- [ ] Botão "centralizar" para voltar ao crop automático
+- [ ] Zoom in/out com scroll ou pinch
+
+### v0.6.0 — Batch mode (múltiplas fotos)
+> Permitir carregar diversas imagens em uma única sessão, percorrer cada uma individualmente para previsualização e ajuste fino, e exportar todas com o mesmo conjunto de configurações de overlay aplicado em massa.
+- [ ] Upload múltiplo — seleção de N arquivos de uma vez ou drag de vários
+- [ ] Filmstrip / carrossel de miniaturas para navegar entre as fotos carregadas
+- [ ] Configurações globais: aplicar estilo, posição, tamanho e ordem a todas de uma vez
+- [ ] Override por foto: permitir ajuste individual antes de exportar
+- [ ] Exportar todas — download em ZIP com todas as imagens processadas
+- [ ] Indicador de progresso por foto durante o processamento em lote
+- [ ] Contador de fotos na interface (ex: "3 / 12")
+
+### Web (geral)
+- [ ] Upload de logo própria na barra / overlay
+- [ ] Color picker para cor de fundo e texto dos pills
+- [ ] Salvar preferências no localStorage (estilo, posição, ordem, tamanho)
+- [ ] Export em PNG além de JPEG
+- [ ] Web Share API — compartilhar direto do browser
+- [ ] Suporte a RAW via conversão prévia no browser (limitado)
 
 ### Mobile
 - [ ] Flutter app scaffold (Android + iOS)
 - [ ] Leitura nativa EXIF via platform channels
+- [ ] Share sheet integration
+- [ ] Batch mode nativo com acesso ao rolo de câmera
+
+### Lightroom Plugin
+- [ ] Scaffold Lua com Lightroom SDK
+- [ ] Leitura de metadados do catálogo na exportação
+- [ ] Preset de overlay salvo por perfil
+
+### Infra
+- [ ] Domínio próprio (frameta.com / frameta.app)
+- [ ] Analytics privacy-first (Plausible)
+- [ ] PWA — instalável como app no desktop e mobile
 - [ ] Share sheet integration
 
 ### Lightroom Plugin
