@@ -183,17 +183,16 @@
     if (result.ok) {
       exifStatus.classList.add('ok');
       exifStatus.textContent = '✓ EXIF detectado';
-    } else if (result._raw && !result._raw._error) {
+    } else if (result._raw && result._raw._ok) {
       exifStatus.classList.add('warn');
       exifStatus.textContent = '⚠ EXIF limitado';
     } else {
       exifStatus.classList.add('err');
-      exifStatus.textContent = '✕ Sem EXIF';
+      exifStatus.textContent = '✕ ' + (result.error || 'Sem EXIF');
     }
 
-    // Lista de campos
+    // Lista de campos formatados
     exifList.innerHTML = '';
-
     const display = [
       ['Câmera',     result.fields.camera],
       ['Lente',      result.fields.lens],
@@ -205,23 +204,31 @@
       ['Data',       result.fields.date],
       ['Software',   result.fields.software],
     ];
-
     display.forEach(([key, val]) => {
       if (!val) return;
       const item = document.createElement('div');
       item.className = 'exif-item';
-      item.innerHTML = `
-        <div class="exif-key">${key}</div>
-        <div class="exif-val">${val}</div>
-      `;
+      item.innerHTML = `<div class="exif-key">${key}</div><div class="exif-val">${val}</div>`;
       exifList.appendChild(item);
     });
-
     if (exifList.children.length === 0) {
       const msg = document.createElement('div');
       msg.className = 'exif-val muted';
       msg.textContent = result.error || 'Nenhum campo disponível.';
       exifList.appendChild(msg);
+    }
+
+    // Debug: mostra os dados crus para diagnóstico
+    const debugBlock = document.getElementById('debugBlock');
+    const debugPre   = document.getElementById('debugPre');
+    if (debugBlock && debugPre && result._raw) {
+      debugBlock.style.display = 'block';
+      const safe = {};
+      Object.entries(result._raw).forEach(([k, v]) => {
+        if (k.startsWith('_')) return;
+        safe[k] = v;
+      });
+      debugPre.textContent = JSON.stringify(safe, null, 2);
     }
   }
 
