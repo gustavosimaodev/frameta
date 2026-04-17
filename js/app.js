@@ -428,7 +428,12 @@
       const url = URL.createObjectURL(blob);
       const a   = document.createElement('a');
       a.href     = url;
-      a.download = 'frameta_' + Date.now() + '.jpg';
+      const filenameInput = document.getElementById('filenameInput');
+      const rawName = filenameInput ? filenameInput.value.trim() : '';
+      const safeName = rawName
+        ? rawName.replace(/[^a-zA-Z0-9_\-\. ]/g, '').replace(/\s+/g, '_')
+        : 'frameta_' + Date.now();
+      a.download = safeName.endsWith('.jpg') ? safeName : safeName + '.jpg';
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       exportBtn.disabled = false;

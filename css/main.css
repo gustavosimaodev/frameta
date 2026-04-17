@@ -457,6 +457,27 @@ input:checked + .toggle-slider::before { transform: translateX(12px); }
   margin-top: 4px;
 }
 
+/* --- NOME DO ARQUIVO --------------------------------------- */
+.filename-input {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--paper-3);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  transition: border-color var(--transition);
+  margin-top: 4px;
+}
+.filename-input:focus {
+  outline: none;
+  border-color: var(--ink-3);
+}
+.sidebar-section .filename-input + .export-btn {
+  margin-top: 6px;
+}
+
 /* --- SCROLLBAR --------------------------------------------- */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
