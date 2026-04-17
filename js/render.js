@@ -59,6 +59,7 @@ window.FrametaRender = (() => {
       font        = 'sans',
       overlaySize = 'md',
       fontScale   = 1.0,
+      barOpacity  = 1.0,
       visible     = {},
       order       = ['camera','lens','shutter','aperture','iso','focal','date'],
     } = opts;
@@ -89,19 +90,14 @@ window.FrametaRender = (() => {
     const isCenter = pos.endsWith('c') || pos === 'mc';
 
     /* ── Canvas size ──────────────────────────────────── */
-    // Overlay: não expande; sólido top/bottom: expande
     const barH = Math.max(90, Math.round(cropW * 0.062));
-    const expandCanvas = !isOverlay && (isTop || isBottom);
-    const totalH = expandCanvas ? cropH + barH : cropH;
-
     canvas.width  = cropW;
-    canvas.height = totalH;
+    canvas.height = cropH;
 
     /* ── Desenha a foto ───────────────────────────────── */
-    const ox       = Math.floor((sw - cropW) / 2);
-    const oy       = Math.floor((sh - cropH) / 2);
-    const imgDestY = (!isOverlay && isTop) ? barH : 0;
-    ctx.drawImage(img, ox, oy, cropW, cropH, 0, imgDestY, cropW, cropH);
+    const ox = Math.floor((sw - cropW) / 2);
+    const oy = Math.floor((sh - cropH) / 2);
+    ctx.drawImage(img, ox, oy, cropW, cropH, 0, 0, cropW, cropH);
 
     /* ════════════════════════════════════════════════════
        MODO OVERLAY — coluna de pills
@@ -239,10 +235,11 @@ window.FrametaRender = (() => {
 
     let barY;
     if (isTop)         barY = 0;
-    else if (isBottom) barY = cropH;
-    else               barY = imgDestY + Math.floor((cropH - barH) / 2);
+    else if (isBottom) barY = cropH - barH;
+    else               barY = Math.floor((cropH - barH) / 2);
 
-    ctx.fillStyle = isDark ? '#0d0d0d' : '#ffffff';
+    const solidAlpha = Math.max(0, Math.min(1, barOpacity));
+    ctx.fillStyle = isDark ? `rgba(13,13,13,${solidAlpha})` : `rgba(255,255,255,${solidAlpha})`;
     ctx.fillRect(0, barY, cropW, barH);
 
     ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';

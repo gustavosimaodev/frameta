@@ -26,6 +26,7 @@
     style:       'overlay',
     overlaySize: 'md',
     fontScale:   1.0,
+    barOpacity:  1.0,
     pos:         'bl',
     fmt:         'original',
     font:        'sans',
@@ -91,6 +92,9 @@
     const sec = document.getElementById('overlaySizeSection');
     if (!sec) return;
     sec.classList.toggle('hidden', state.style !== 'overlay');
+    const opacityRow = document.getElementById('opacityRow');
+    const isSolid = state.style === 'white' || state.style === 'dark';
+    if (opacityRow) opacityRow.style.display = isSolid ? 'flex' : 'none';
   }
   updateOverlaySizeVisibility();
 
@@ -106,6 +110,17 @@
       // overlaySize mapeado pelo valor do slider para manter compatibilidade com render.js
       state.overlaySize = pct <= 80 ? 'sm' : pct <= 120 ? 'md' : 'lg';
       fontSizeVal.textContent = pct + '%';
+      render();
+    });
+  }
+
+  const opacitySlider = document.getElementById('opacitySlider');
+  const opacityVal    = document.getElementById('opacityVal');
+  if (opacitySlider) {
+    opacitySlider.addEventListener('input', () => {
+      const pct = parseInt(opacitySlider.value);
+      state.barOpacity = pct / 100;
+      opacityVal.textContent = pct + '%';
       render();
     });
   }
@@ -385,6 +400,7 @@
       font:        state.font,
       overlaySize: state.overlaySize,
       fontScale:   state.fontScale,
+      barOpacity:  state.barOpacity,
       order:       state.order,
       visible:     state.visible,
     });
