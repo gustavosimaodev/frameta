@@ -28,6 +28,8 @@
     fontScale:   1.0,
     barOpacity:  1.0,
     signature:   '',
+    batch:       [],
+    batchIndex:  0,
     pos:         'bl',
     fmt:         'original',
     font:        'sans',
@@ -269,9 +271,9 @@
      UPLOAD — FILE INPUT
   ------------------------------------------------------- */
   fileInput.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (file) loadFile(file);
-    fileInput.value = ''; // reset para permitir reupload do mesmo arquivo
+    const files = Array.from(e.target.files);
+    if (files.length > 0) loadBatch(files);
+    fileInput.value = '';
   });
 
   /* -------------------------------------------------------
@@ -296,12 +298,9 @@
   workspace.addEventListener('drop', e => {
     e.preventDefault();
     dropOverlay.classList.remove('active');
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.match(/^image\//)) {
-      loadFile(file);
-    } else {
-      showToast('Formato não suportado. Use JPEG, PNG ou TIFF.');
-    }
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.match(/^image\//));
+    if (files.length > 0) loadBatch(files);
+    else showToast('Formato não suportado. Use JPEG, PNG ou TIFF.');
   });
 
   /* -------------------------------------------------------
@@ -309,44 +308,140 @@
   ------------------------------------------------------- */
   async function loadFile(file) {
     showToast('Lendo metadados…');
-
-    // 1. Carrega a imagem
     const url = URL.createObjectURL(file);
-    const img  = new Image();
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      showToast('Erro ao carregar a imagem.');
-    };
-
+    const img = new Image();
+    img.onerror = () => { URL.revokeObjectURL(url); showToast('Erro ao carregar a imagem.'); };
     img.onload = async () => {
       state.img = img;
       URL.revokeObjectURL(url);
-
-      // 2. Lê o EXIF
       const raw    = await window.FrametaExif.parse(file);
       const result = window.FrametaExif.extract(raw);
       state.fields = result.fields || {};
-
-      // 3. Atualiza painel EXIF
       updateExifPanel(result);
-
-      // 4. Renderiza
       render();
       exportBtn.disabled = false;
-
-      // 5. Mostra preview
-      emptyState.style.display      = 'none';
+      emptyState.style.display       = 'none';
       previewContainer.style.display = 'flex';
-
-      if (result.ok) {
-        showToast('EXIF carregado com sucesso.');
-      } else {
-        showToast('Foto carregada. ' + (result.error || 'Sem dados EXIF.'));
-      }
+      if (result.ok) showToast('EXIF carregado com sucesso.');
+      else showToast('Foto carregada. ' + (result.error || 'Sem dados EXIF.'));
     };
-
     img.src = url;
+  }
+
+  async function loadBatch(files) {
+    if (!files || files.length === 0) return;
+
+    // Caso único — comportamento original
+    if (files.length === 1) {
+      loadFile(files[0]);
+      hideBatchUI();
+      return;
+    }
+
+    showToast('Carregando ' + files.length + ' fotos…');
+    state.batch = [];
+    state.batchIndex = 0;
+
+    for (const file of files) {
+      const url = URL.createObjectURL(file);
+      const img = await new Promise(res => {
+        const i = new Image();
+        i.onload  = () => { URL.revokeObjectURL(url); res(i); };
+        i.onerror = () => { URL.revokeObjectURL(url); res(null); };
+        i.src = url;
+      });
+      if (!img) continue;
+
+      const raw    = await window.FrametaExif.parse(file);
+      const result = window.FrametaExif.extract(raw);
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+
+      state.batch.push({ img, fields: result.fields || {}, result, filename: baseName });
+    }
+
+    if (state.batch.length === 0) { showToast('Nenhuma imagem válida.'); return; }
+
+    showBatchUI();
+    buildFilmstrip();
+    activateBatchItem(0);
+    showToast(state.batch.length + ' fotos carregadas.');
+  }
+
+  function showBatchUI() {
+    const filmstrip      = document.getElementById('filmstrip');
+    const exportAllBtn   = document.getElementById('exportAllBtn');
+    const batchCounter   = document.getElementById('batchCounter');
+    const exportBtnLabel = document.getElementById('exportBtnLabel');
+    if (filmstrip)      filmstrip.style.display    = 'flex';
+    if (exportAllBtn)   exportAllBtn.style.display = 'flex';
+    if (batchCounter)   batchCounter.classList.add('visible');
+    if (exportBtnLabel) exportBtnLabel.textContent = 'Baixar atual';
+    updateBatchCounter();
+  }
+
+  function hideBatchUI() {
+    const filmstrip      = document.getElementById('filmstrip');
+    const exportAllBtn   = document.getElementById('exportAllBtn');
+    const batchCounter   = document.getElementById('batchCounter');
+    const exportBtnLabel = document.getElementById('exportBtnLabel');
+    if (filmstrip)      filmstrip.style.display    = 'none';
+    if (exportAllBtn)   exportAllBtn.style.display = 'none';
+    if (batchCounter)   batchCounter.classList.remove('visible');
+    if (exportBtnLabel) exportBtnLabel.textContent = 'Baixar foto';
+    state.batch = [];
+    state.batchIndex = 0;
+  }
+
+  function updateBatchCounter() {
+    const el = document.getElementById('batchCounter');
+    if (el) el.textContent = (state.batchIndex + 1) + ' / ' + state.batch.length;
+  }
+
+  function buildFilmstrip() {
+    const track = document.getElementById('filmstripTrack');
+    if (!track) return;
+    track.innerHTML = '';
+    state.batch.forEach((item, i) => {
+      const thumb = document.createElement('div');
+      thumb.className = 'filmstrip-thumb' + (i === 0 ? ' active' : '');
+      thumb.dataset.index = i;
+      const tImg = document.createElement('img');
+      tImg.src = item.img.src;
+      const idx = document.createElement('span');
+      idx.className = 'thumb-index';
+      idx.textContent = i + 1;
+      thumb.appendChild(tImg);
+      thumb.appendChild(idx);
+      thumb.addEventListener('click', () => activateBatchItem(i));
+      track.appendChild(thumb);
+    });
+  }
+
+  function activateBatchItem(index) {
+    state.batchIndex = index;
+    const item = state.batch[index];
+    if (!item) return;
+
+    state.img    = item.img;
+    state.fields = item.fields;
+
+    const fi = document.getElementById('filenameInput');
+    if (fi) fi.value = item.filename;
+
+    updateExifPanel(item.result);
+    render();
+    exportBtn.disabled = false;
+    emptyState.style.display       = 'none';
+    previewContainer.style.display = 'flex';
+    updateBatchCounter();
+
+    document.querySelectorAll('.filmstrip-thumb').forEach((t, i) => {
+      t.classList.toggle('active', i === index);
+    });
+
+    const track  = document.getElementById('filmstripTrack');
+    const active = track && track.querySelector('.filmstrip-thumb.active');
+    if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }
 
   /* -------------------------------------------------------
@@ -467,6 +562,69 @@
       showToast('Download iniciado!');
     }, 'image/jpeg', 0.95);
   });
+
+  const exportAllBtn = document.getElementById('exportAllBtn');
+  if (exportAllBtn) {
+    exportAllBtn.addEventListener('click', async () => {
+      if (state.batch.length === 0) return;
+      exportAllBtn.disabled = true;
+      showToast('Preparando ' + state.batch.length + ' fotos…');
+
+      if (!window.JSZip) {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+          s.onload = res; s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      }
+
+      const zip = new window.JSZip();
+      const savedIndex  = state.batchIndex;
+      const savedImg    = state.img;
+      const savedFields = state.fields;
+
+      for (let i = 0; i < state.batch.length; i++) {
+        const item = state.batch[i];
+        state.img    = item.img;
+        state.fields = item.fields;
+        render();
+        const blob = await new Promise(res =>
+          mainCanvas.toBlob(res, 'image/jpeg', 0.95)
+        );
+        const name = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
+        zip.file(name, blob);
+        showToast('Processando ' + (i + 1) + ' de ' + state.batch.length + '…');
+      }
+
+      state.img    = savedImg;
+      state.fields = savedFields;
+      activateBatchItem(savedIndex);
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href     = URL.createObjectURL(zipBlob);
+      a.download = 'frameta_batch_' + Date.now() + '.zip';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+      exportAllBtn.disabled = false;
+      showToast('Download do ZIP iniciado!');
+    });
+  }
+
+  const filmPrev = document.getElementById('filmPrev');
+  const filmNext = document.getElementById('filmNext');
+  if (filmPrev) {
+    filmPrev.addEventListener('click', () => {
+      if (state.batchIndex > 0) activateBatchItem(state.batchIndex - 1);
+    });
+  }
+  if (filmNext) {
+    filmNext.addEventListener('click', () => {
+      if (state.batchIndex < state.batch.length - 1)
+        activateBatchItem(state.batchIndex + 1);
+    });
+  }
 
   /* -------------------------------------------------------
      TOAST
