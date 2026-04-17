@@ -450,10 +450,16 @@
      PAINEL EXIF
   ------------------------------------------------------- */
   function updateExifPanel(result) {
+    // Reset completo antes de popular
     exifEmpty.style.display = 'none';
     exifData.style.display  = 'block';
+    exifList.innerHTML      = '';
+    exifStatus.className    = 'exif-status';
+    exifStatus.textContent  = '';
 
-    // Status badge
+    const debugBlock = document.getElementById('debugBlock');
+    if (debugBlock) debugBlock.style.display = 'none';
+
     exifStatus.className = 'exif-status';
     if (result.ok) {
       exifStatus.classList.add('ok');
@@ -503,21 +509,20 @@
       exifList.appendChild(msg);
     }
 
-    // Debug: mostra os dados crus para diagnóstico
-    const debugBlock = document.getElementById('debugBlock');
-    const debugPre   = document.getElementById('debugPre');
-    if (debugBlock && debugPre) {
-      debugBlock.style.display = 'block';
-      const log = result._log || [];
-      const safe = {};
-      if (result._raw) {
+    if (result._raw) {
+      const debugBlock = document.getElementById('debugBlock');
+      const debugPre   = document.getElementById('debugPre');
+      if (debugBlock && debugPre) {
+        debugBlock.style.display = 'block';
+        const log  = result._log || [];
+        const safe = {};
         Object.entries(result._raw).forEach(([k, v]) => {
           if (!k.startsWith('_')) safe[k] = v;
         });
+        debugPre.textContent =
+          '── LOG ──\n' + log.join('\n') +
+          '\n\n── RAW FIELDS ──\n' + JSON.stringify(safe, null, 2);
       }
-      debugPre.textContent =
-        '── LOG ──\n' + log.join('\n') +
-        '\n\n── RAW FIELDS ──\n' + JSON.stringify(safe, null, 2);
     }
   }
 
@@ -592,15 +597,19 @@
         showToast('Baixando ' + (i + 1) + ' de ' + state.batch.length + '…');
 
         await new Promise(resolve => {
-          mainCanvas.toBlob(blob => {
-            const url = URL.createObjectURL(blob);
-            const a   = document.createElement('a');
-            a.href     = url;
-            a.download = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => { URL.revokeObjectURL(url); resolve(); }, 1000);
+          mainCanvas.toBlob(async blob => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const a = document.createElement('a');
+              a.href     = reader.result;
+              a.download = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
+              a.style.display = 'none';
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              setTimeout(resolve, 1200);
+            };
+            reader.readAsDataURL(blob);
           }, 'image/jpeg', 0.95);
         });
       }
