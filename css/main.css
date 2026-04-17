@@ -478,6 +478,101 @@ input:checked + .toggle-slider::before { transform: translateX(12px); }
   margin-top: 6px;
 }
 
+/* --- BATCH MODE / FILMSTRIP -------------------------------- */
+.export-btn--batch {
+  background: var(--ink-2);
+  margin-top: 4px;
+}
+.export-btn--batch:hover { background: var(--ink); }
+
+.filmstrip {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  backdrop-filter: blur(8px);
+}
+
+.filmstrip-track {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 6px 0;
+}
+.filmstrip-track::-webkit-scrollbar { display: none; }
+
+.filmstrip-thumb {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color var(--transition);
+  position: relative;
+}
+.filmstrip-thumb.active {
+  border-color: var(--accent-alt);
+}
+.filmstrip-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.filmstrip-thumb .thumb-index {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-size: 8px;
+  font-family: var(--font-mono);
+  color: white;
+  background: rgba(0,0,0,0.55);
+  padding: 1px 3px;
+  border-radius: 2px;
+}
+
+.filmstrip-nav {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: white;
+  font-size: 20px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+.filmstrip-nav:hover { background: rgba(255,255,255,0.25); }
+.filmstrip-nav:disabled { opacity: 0.2; cursor: not-allowed; }
+
+.batch-counter {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: white;
+  background: rgba(0,0,0,0.55);
+  padding: 3px 8px;
+  border-radius: 20px;
+  display: none;
+}
+.batch-counter.visible { display: block; }
+
 /* --- RESPONSIVIDADE MOBILE --------------------------------- */
 @media (max-width: 768px) {
 
