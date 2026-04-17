@@ -12,6 +12,7 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 - [ ] Preview do recorte em tempo real ao mudar o formato
 - [ ] Botão "centralizar" para voltar ao crop automático
 - [ ] Zoom in/out com scroll ou pinch
+- [ ] No batch mode, cada foto mantém seu próprio offset de posicionamento
 
 ### v0.8.0 — Batch mode (múltiplas fotos)
 > Permitir carregar diversas imagens em uma única sessão, percorrer cada uma individualmente para previsualização e ajuste fino, e exportar todas com o mesmo conjunto de configurações de overlay aplicado em massa.
