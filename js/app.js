@@ -418,15 +418,15 @@
   }
 
   function activateBatchItem(index) {
+    if (index < 0 || index >= state.batch.length) return;
     state.batchIndex = index;
     const item = state.batch[index];
-    if (!item) return;
 
     state.img    = item.img;
     state.fields = item.fields;
 
     const fi = document.getElementById('filenameInput');
-    if (fi) fi.value = item.filename;
+    if (fi) fi.value = item.filename || '';
 
     updateExifPanel(item.result);
     render();
@@ -441,7 +441,9 @@
 
     const track  = document.getElementById('filmstripTrack');
     const active = track && track.querySelector('.filmstrip-thumb.active');
-    if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    if (active) active.scrollIntoView({
+      behavior: 'smooth', inline: 'center', block: 'nearest'
+    });
   }
 
   /* -------------------------------------------------------
@@ -569,30 +571,40 @@
       if (state.batch.length === 0) return;
       exportAllBtn.disabled = true;
 
-      const savedIndex  = state.batchIndex;
-      const savedImg    = state.img;
-      const savedFields = state.fields;
+      const savedIndex = state.batchIndex;
 
       for (let i = 0; i < state.batch.length; i++) {
         const item = state.batch[i];
-        state.img    = item.img;
-        state.fields = item.fields;
-        render();
+
+        window.FrametaRender.draw(mainCanvas, item.img, item.fields, {
+          style:       state.style,
+          pos:         state.pos,
+          fmt:         state.fmt,
+          font:        state.font,
+          overlaySize: state.overlaySize,
+          fontScale:   state.fontScale,
+          barOpacity:  state.barOpacity,
+          order:       state.order,
+          visible:     state.visible,
+          signature:   state.signature,
+        });
+
         showToast('Baixando ' + (i + 1) + ' de ' + state.batch.length + '…');
 
         await new Promise(resolve => {
           mainCanvas.toBlob(blob => {
-            const a = document.createElement('a');
-            a.href     = URL.createObjectURL(blob);
+            const url = URL.createObjectURL(blob);
+            const a   = document.createElement('a');
+            a.href     = url;
             a.download = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
+            document.body.appendChild(a);
             a.click();
-            setTimeout(() => { URL.revokeObjectURL(a.href); resolve(); }, 800);
+            document.body.removeChild(a);
+            setTimeout(() => { URL.revokeObjectURL(url); resolve(); }, 1000);
           }, 'image/jpeg', 0.95);
         });
       }
 
-      state.img    = savedImg;
-      state.fields = savedFields;
       activateBatchItem(savedIndex);
       exportAllBtn.disabled = false;
       showToast('Todas as fotos baixadas!');

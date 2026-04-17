@@ -175,40 +175,42 @@
 
     </aside>
 
-    <!-- WORKSPACE -->
-    <main class="workspace" id="workspace">
-      <div class="drop-overlay" id="dropOverlay">
-        <div class="drop-overlay-inner">
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-          </svg>
-          <span>Solte a foto aqui</span>
+    <div class="app-column">
+      <!-- WORKSPACE -->
+      <main class="workspace" id="workspace">
+        <div class="drop-overlay" id="dropOverlay">
+          <div class="drop-overlay-inner">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            </svg>
+            <span>Solte a foto aqui</span>
+          </div>
         </div>
-      </div>
-      <div class="empty-state" id="emptyState">
-        <div class="empty-icon">
-          <svg width="48" height="48" viewBox="0 0 28 28" fill="none">
-            <rect x="2" y="6" width="24" height="17" rx="3" stroke="currentColor" stroke-width="1"/>
-            <circle cx="14" cy="14.5" r="4.5" stroke="currentColor" stroke-width="1"/>
-            <circle cx="14" cy="14.5" r="2" fill="currentColor" opacity="0.4"/>
-            <rect x="9" y="3" width="10" height="4" rx="1.5" stroke="currentColor" stroke-width="1"/>
-          </svg>
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 28 28" fill="none">
+              <rect x="2" y="6" width="24" height="17" rx="3" stroke="currentColor" stroke-width="1"/>
+              <circle cx="14" cy="14.5" r="4.5" stroke="currentColor" stroke-width="1"/>
+              <circle cx="14" cy="14.5" r="2" fill="currentColor" opacity="0.4"/>
+              <rect x="9" y="3" width="10" height="4" rx="1.5" stroke="currentColor" stroke-width="1"/>
+            </svg>
+          </div>
+          <h2 class="empty-title">Arraste uma foto aqui</h2>
+          <p class="empty-sub">ou use o botão <em>Abrir foto</em> na barra lateral</p>
+          <p class="empty-formats">JPEG · PNG · TIFF · WebP</p>
         </div>
-        <h2 class="empty-title">Arraste uma foto aqui</h2>
-        <p class="empty-sub">ou use o botão <em>Abrir foto</em> na barra lateral</p>
-        <p class="empty-formats">JPEG · PNG · TIFF · WebP</p>
-      </div>
-      <div class="preview-container" id="previewContainer" style="display:none">
-        <canvas id="mainCanvas"></canvas>
-      </div>
-    </main>
+        <div class="preview-container" id="previewContainer" style="display:none">
+          <canvas id="mainCanvas"></canvas>
+        </div>
+      </main>
 
-    <div class="filmstrip" id="filmstrip" style="display:none">
-      <button class="filmstrip-nav" id="filmPrev">‹</button>
-      <div class="filmstrip-track" id="filmstripTrack"></div>
-      <div class="batch-counter" id="batchCounter"></div>
-      <button class="filmstrip-nav" id="filmNext">›</button>
+      <div class="filmstrip" id="filmstrip" style="display:none">
+        <button class="filmstrip-nav" id="filmPrev">‹</button>
+        <div class="filmstrip-track" id="filmstripTrack"></div>
+        <div class="batch-counter" id="batchCounter"></div>
+        <button class="filmstrip-nav" id="filmNext">›</button>
+      </div>
     </div>
 
     <!-- PAINEL EXIF -->
