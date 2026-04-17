@@ -486,17 +486,14 @@ input:checked + .toggle-slider::before { transform: translateX(12px); }
 .export-btn--batch:hover { background: var(--ink); }
 
 .filmstrip {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 80px;
-  background: rgba(0,0,0,0.72);
+  width: 100%;
+  background: var(--paper-2);
+  border-top: 1px solid var(--paper-3);
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 8px;
-  backdrop-filter: blur(8px);
+  padding: 8px;
+  flex-shrink: 0;
 }
 
 .filmstrip-track {
@@ -560,16 +557,12 @@ input:checked + .toggle-slider::before { transform: translateX(12px); }
 .filmstrip-nav:disabled { opacity: 0.2; cursor: not-allowed; }
 
 .batch-counter {
-  position: absolute;
-  top: 12px;
-  right: 12px;
   font-size: 10px;
   font-family: var(--font-mono);
-  color: white;
-  background: rgba(0,0,0,0.55);
-  padding: 3px 8px;
-  border-radius: 20px;
+  color: var(--ink-3);
+  white-space: nowrap;
   display: none;
+  padding: 0 4px;
 }
 .batch-counter.visible { display: block; }
 

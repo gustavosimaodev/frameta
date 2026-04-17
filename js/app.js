@@ -568,18 +568,7 @@
     exportAllBtn.addEventListener('click', async () => {
       if (state.batch.length === 0) return;
       exportAllBtn.disabled = true;
-      showToast('Preparando ' + state.batch.length + ' fotos…');
 
-      if (!window.JSZip) {
-        await new Promise((res, rej) => {
-          const s = document.createElement('script');
-          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-          s.onload = res; s.onerror = rej;
-          document.head.appendChild(s);
-        });
-      }
-
-      const zip = new window.JSZip();
       const savedIndex  = state.batchIndex;
       const savedImg    = state.img;
       const savedFields = state.fields;
@@ -589,26 +578,24 @@
         state.img    = item.img;
         state.fields = item.fields;
         render();
-        const blob = await new Promise(res =>
-          mainCanvas.toBlob(res, 'image/jpeg', 0.95)
-        );
-        const name = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
-        zip.file(name, blob);
-        showToast('Processando ' + (i + 1) + ' de ' + state.batch.length + '…');
+        showToast('Baixando ' + (i + 1) + ' de ' + state.batch.length + '…');
+
+        await new Promise(resolve => {
+          mainCanvas.toBlob(blob => {
+            const a = document.createElement('a');
+            a.href     = URL.createObjectURL(blob);
+            a.download = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
+            a.click();
+            setTimeout(() => { URL.revokeObjectURL(a.href); resolve(); }, 800);
+          }, 'image/jpeg', 0.95);
+        });
       }
 
       state.img    = savedImg;
       state.fields = savedFields;
       activateBatchItem(savedIndex);
-
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      const a = document.createElement('a');
-      a.href     = URL.createObjectURL(zipBlob);
-      a.download = 'frameta_batch_' + Date.now() + '.zip';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
       exportAllBtn.disabled = false;
-      showToast('Download do ZIP iniciado!');
+      showToast('Todas as fotos baixadas!');
     });
   }
 

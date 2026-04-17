@@ -149,10 +149,10 @@ window.FrametaRender = (() => {
         const isSignature = !!item.isSignature;
         const fs = (isBrand || isSignature)
           ? Math.max(9, Math.round(baseFs * 0.60))
-          : isCamLens
-            ? Math.max(13, Math.round(baseFs * (item.key === 'camera' ? 1.15 : 0.88)))
-            : baseFs;
-        const fw = (isBrand || isSignature) ? '300' : isCamLens ? '700' : '500';
+          : baseFs;
+        const fw = (isBrand || isSignature)
+          ? '300'
+          : (item.key === 'camera') ? '700' : '400';
         ctx.font = `${fw} ${fs}px ${fontFam}`;
         const tw = ctx.measureText(item.value).width;
         const px = (isBrand || isSignature) ? Math.round(fs * 0.65) : pillPadX;
@@ -183,6 +183,8 @@ window.FrametaRender = (() => {
       else               blockY = Math.round((cropH - totalPillH) / 2);
 
       /* Desenha cada pill */
+      const textAlign = isRight ? 'right' : isCenter ? 'center' : 'left';
+      ctx.textAlign = textAlign;
       let currentY = blockY;
       measured.forEach((item, idx) => {
         const isCamLens   = item.key === 'camera' || item.key === 'lens';
@@ -203,17 +205,23 @@ window.FrametaRender = (() => {
         ctx.stroke();
 
         const textY = currentY + item.ph / 2;
+        let textX;
+        if (textAlign === 'right')       textX = blockX + item.pw - item.px;
+        else if (textAlign === 'center') textX = blockX + item.pw / 2;
+        else                             textX = blockX + item.px;
         ctx.font      = `${item.fw} ${item.fs}px ${fontFam}`;
         ctx.fillStyle = (isBrand || isSignature) ? 'rgba(255,255,255,0.65)' : '#ffffff';
-
         if (isBrand || isSignature) {
-          ctx.fillText(item.value, blockX + item.px, textY);
+          ctx.textAlign = textAlign;
+          ctx.fillText(item.value, textX, textY);
         } else {
-          outlineText(ctx, item.value, blockX + item.px, textY, strokeW);
+          ctx.textAlign = textAlign;
+          outlineText(ctx, item.value, textX, textY, strokeW);
         }
 
         currentY += item.ph + pillGap;
       });
+      ctx.textAlign = 'left';
 
       return; // encerra o modo overlay
 
@@ -348,6 +356,7 @@ window.FrametaRender = (() => {
     if (rx - wmW - 16 > leftX + 60) {
       ctx.fillText(wmText, cropW - pad - wmW, barY + barH - wmFs * 0.8);
     }
+    ctx.textAlign = 'left';
   }
 
   return { draw };

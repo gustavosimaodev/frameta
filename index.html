@@ -177,7 +177,6 @@
 
     <!-- WORKSPACE -->
     <main class="workspace" id="workspace">
-      <div class="batch-counter" id="batchCounter"></div>
       <div class="drop-overlay" id="dropOverlay">
         <div class="drop-overlay-inner">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
@@ -203,12 +202,14 @@
       <div class="preview-container" id="previewContainer" style="display:none">
         <canvas id="mainCanvas"></canvas>
       </div>
-      <div class="filmstrip" id="filmstrip" style="display:none">
-        <button class="filmstrip-nav" id="filmPrev">‹</button>
-        <div class="filmstrip-track" id="filmstripTrack"></div>
-        <button class="filmstrip-nav" id="filmNext">›</button>
-      </div>
     </main>
+
+    <div class="filmstrip" id="filmstrip" style="display:none">
+      <button class="filmstrip-nav" id="filmPrev">‹</button>
+      <div class="filmstrip-track" id="filmstripTrack"></div>
+      <div class="batch-counter" id="batchCounter"></div>
+      <button class="filmstrip-nav" id="filmNext">›</button>
+    </div>
 
     <!-- PAINEL EXIF -->
     <aside class="exif-panel" id="exifPanel">
