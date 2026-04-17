@@ -239,6 +239,33 @@
   })();
 
   /* -------------------------------------------------------
+     SIDEBAR TOGGLE — mobile
+  ------------------------------------------------------- */
+  (function initSidebarToggle() {
+    const toggle  = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    if (!toggle || !sidebar) return;
+
+    // Começa colapsado em mobile
+    if (window.innerWidth <= 768) {
+      sidebar.classList.add('collapsed');
+    }
+
+    toggle.addEventListener('click', () => {
+      sidebar.classList.toggle('collapsed');
+    });
+
+    // Redefine ao redimensionar
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) {
+        sidebar.classList.remove('collapsed');
+      } else if (!sidebar.classList.contains('collapsed')) {
+        sidebar.classList.add('collapsed');
+      }
+    });
+  })();
+
+  /* -------------------------------------------------------
      UPLOAD — FILE INPUT
   ------------------------------------------------------- */
   fileInput.addEventListener('change', e => {

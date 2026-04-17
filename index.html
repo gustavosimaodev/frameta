@@ -40,10 +40,14 @@
   <!-- EDITOR -->
   <div class="app" id="tabEditor">
 
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <span>Configurações</span>
+        <span class="sidebar-toggle-icon">▾</span>
+      </button>
 
       <!-- UPLOAD -->
-      <section class="sidebar-section">
+      <section class="sidebar-section sidebar-section--always">
         <label class="upload-zone" id="uploadZone">
           <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/tiff,image/webp,image/heic" hidden />
           <div class="upload-icon">

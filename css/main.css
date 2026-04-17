@@ -478,6 +478,121 @@ input:checked + .toggle-slider::before { transform: translateX(12px); }
   margin-top: 6px;
 }
 
+/* --- RESPONSIVIDADE MOBILE --------------------------------- */
+@media (max-width: 768px) {
+
+  :root {
+    --header-h: 48px;
+    --sidebar-w: 100%;
+    --exif-w: 100%;
+  }
+
+  .app {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: unset;
+    border-right: none;
+    border-bottom: 1px solid var(--paper-3);
+    padding: 10px 12px;
+    overflow: visible;
+    max-height: none;
+  }
+
+  .sidebar.collapsed .sidebar-section:not(.sidebar-section--always) {
+    display: none;
+  }
+
+  .sidebar-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 6px 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-2);
+    margin-bottom: 8px;
+  }
+
+  .sidebar-toggle-icon {
+    font-size: 11px;
+    color: var(--ink-4);
+    transition: transform var(--transition);
+  }
+
+  .sidebar.collapsed .sidebar-toggle-icon {
+    transform: rotate(-90deg);
+  }
+
+  .workspace {
+    min-height: 60vw;
+    height: auto;
+  }
+
+  #mainCanvas {
+    max-width: calc(100vw - 24px);
+    max-height: 80vw;
+  }
+
+  .exif-panel {
+    width: 100%;
+    min-width: unset;
+    border-left: none;
+    border-top: 1px solid var(--paper-3);
+    padding: 12px;
+  }
+
+  .fmt-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .pos-grid {
+    max-width: 120px;
+  }
+
+  .option-group {
+    flex-wrap: wrap;
+  }
+
+  .about-inner h1 {
+    font-size: 32px;
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-links {
+    flex-direction: column;
+  }
+
+  .header-credit {
+    display: none;
+  }
+
+  .upload-zone {
+    padding: 10px;
+    flex-direction: row;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .upload-sub { display: none; }
+
+  .font-size-row { gap: 4px; }
+}
+
+.sidebar-toggle { display: none; }
+
 /* --- SCROLLBAR --------------------------------------------- */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
