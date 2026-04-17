@@ -331,7 +331,6 @@
   async function loadBatch(files) {
     if (!files || files.length === 0) return;
 
-    // Caso único — comportamento original
     if (files.length === 1) {
       loadFile(files[0]);
       hideBatchUI();
@@ -339,27 +338,51 @@
     }
 
     showToast('Carregando ' + files.length + ' fotos…');
-    state.batch = [];
+    state.batch      = [];
     state.batchIndex = 0;
 
     for (const file of files) {
-      const url = URL.createObjectURL(file);
+      // Cria blob URL permanente para a imagem (não revoga)
+      const blobUrl = URL.createObjectURL(file);
+
       const img = await new Promise(res => {
-        const i = new Image();
-        i.onload  = () => { URL.revokeObjectURL(url); res(i); };
-        i.onerror = () => { URL.revokeObjectURL(url); res(null); };
-        i.src = url;
+        const i  = new Image();
+        i.onload  = () => res(i);
+        i.onerror = () => res(null);
+        i.src     = blobUrl;
       });
-      if (!img) continue;
+      if (!img) { URL.revokeObjectURL(blobUrl); continue; }
 
       const raw    = await window.FrametaExif.parse(file);
       const result = window.FrametaExif.extract(raw);
+
+      // Copia profunda dos fields para isolar do buffer original
+      const safeFields = JSON.parse(JSON.stringify(result.fields || {}));
+
+      // Reconstrói result sem referências ao buffer binário
+      const safeResult = {
+        ok:     result.ok,
+        error:  result.error || null,
+        fields: safeFields,
+        _raw:   { _ok: raw && raw._ok },
+        _log:   [],
+      };
+
       const baseName = file.name.replace(/\.[^.]+$/, '');
 
-      state.batch.push({ img, fields: result.fields || {}, result, filename: baseName });
+      state.batch.push({
+        img,
+        blobUrl,
+        fields:   safeFields,
+        result:   safeResult,
+        filename: baseName,
+      });
     }
 
-    if (state.batch.length === 0) { showToast('Nenhuma imagem válida.'); return; }
+    if (state.batch.length === 0) {
+      showToast('Nenhuma imagem válida.');
+      return;
+    }
 
     showBatchUI();
     buildFilmstrip();
@@ -388,7 +411,11 @@
     if (exportAllBtn)   exportAllBtn.style.display = 'none';
     if (batchCounter)   batchCounter.classList.remove('visible');
     if (exportBtnLabel) exportBtnLabel.textContent = 'Baixar foto';
-    state.batch = [];
+    // Revoga blob URLs para liberar memória
+    state.batch.forEach(item => {
+      if (item.blobUrl) URL.revokeObjectURL(item.blobUrl);
+    });
+    state.batch      = [];
     state.batchIndex = 0;
   }
 
@@ -575,8 +602,11 @@
     exportAllBtn.addEventListener('click', async () => {
       if (state.batch.length === 0) return;
       exportAllBtn.disabled = true;
+      showToast('Preparando downloads…');
 
-      const savedIndex = state.batchIndex;
+      const savedIndex  = state.batchIndex;
+      const savedImg    = state.img;
+      const savedFields = state.fields;
 
       for (let i = 0; i < state.batch.length; i++) {
         const item = state.batch[i];
@@ -597,26 +627,30 @@
         showToast('Baixando ' + (i + 1) + ' de ' + state.batch.length + '…');
 
         await new Promise(resolve => {
-          mainCanvas.toBlob(async blob => {
+          mainCanvas.toBlob(blob => {
             const reader = new FileReader();
-            reader.onload = () => {
-              const a = document.createElement('a');
-              a.href     = reader.result;
-              a.download = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
-              a.style.display = 'none';
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              setTimeout(resolve, 1200);
+            reader.onloadend = () => {
+              const link     = document.createElement('a');
+              link.href      = reader.result;
+              link.download  = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
+              link.style.display = 'none';
+              document.body.appendChild(link);
+              link.click();
+              setTimeout(() => {
+                document.body.removeChild(link);
+                resolve();
+              }, 1500);
             };
             reader.readAsDataURL(blob);
           }, 'image/jpeg', 0.95);
         });
       }
 
+      state.img    = savedImg;
+      state.fields = savedFields;
       activateBatchItem(savedIndex);
       exportAllBtn.disabled = false;
-      showToast('Todas as fotos baixadas!');
+      showToast('Todas as ' + state.batch.length + ' fotos baixadas!');
     });
   }
 
