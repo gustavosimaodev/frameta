@@ -3,6 +3,7 @@
  * Controller principal — orquestra UI, EXIF e renderização.
  *
  * Autor: Gustavo de Morais Simão
+ * v0.9.0 — batch mode estável, download ZIP, código limpo
  */
 
 (() => {
@@ -22,7 +23,7 @@
       focal:    true,
       date:     false,
     },
-    order: ['camera','lens','shutter','aperture','iso','focal','date'],
+    order:       ['camera','lens','shutter','aperture','iso','focal','date'],
     style:       'overlay',
     overlaySize: 'md',
     fontScale:   1.0,
@@ -40,19 +41,18 @@
   ------------------------------------------------------- */
   const $ = id => document.getElementById(id);
 
-  const fileInput       = $('fileInput');
-  const uploadZone      = $('uploadZone');
-  const workspace       = $('workspace');
-  const dropOverlay     = $('dropOverlay');
-  const emptyState      = $('emptyState');
-  const previewContainer= $('previewContainer');
-  const mainCanvas      = $('mainCanvas');
-  const exportBtn       = $('exportBtn');
-  const exifEmpty       = $('exifEmpty');
-  const exifData        = $('exifData');
-  const exifStatus      = $('exifStatus');
-  const exifList        = $('exifList');
-  const toast           = $('toast');
+  const fileInput        = $('fileInput');
+  const workspace        = $('workspace');
+  const dropOverlay      = $('dropOverlay');
+  const emptyState       = $('emptyState');
+  const previewContainer = $('previewContainer');
+  const mainCanvas       = $('mainCanvas');
+  const exportBtn        = $('exportBtn');
+  const exifEmpty        = $('exifEmpty');
+  const exifData         = $('exifData');
+  const exifStatus       = $('exifStatus');
+  const exifList         = $('exifList');
+  const toast            = $('toast');
 
   /* -------------------------------------------------------
      NAVEGAÇÃO (tabs)
@@ -62,14 +62,14 @@
       document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab;
-      $('tabEditor').style.display   = tab === 'editor'   ? 'flex'  : 'none';
-      $('tabAbout').style.display    = tab === 'about'    ? 'flex'  : 'none';
-      $('tabFeedback').style.display = tab === 'feedback' ? 'flex'  : 'none';
+      $('tabEditor').style.display   = tab === 'editor'   ? 'flex' : 'none';
+      $('tabAbout').style.display    = tab === 'about'    ? 'flex' : 'none';
+      $('tabFeedback').style.display = tab === 'feedback' ? 'flex' : 'none';
     });
   });
 
   /* -------------------------------------------------------
-     GRUPOS DE BOTÕES (estilo, posição, formato, fonte)
+     GRUPOS DE BOTÕES
   ------------------------------------------------------- */
   function setupGroup(groupId, stateKey, callback) {
     const group = $(groupId);
@@ -85,24 +85,36 @@
     });
   }
 
-  setupGroup('styleGroup',      'style',       updateOverlaySizeVisibility);
-  setupGroup('posGroup',        'pos');
-  setupGroup('fmtGroup',        'fmt');
-  setupGroup('fontGroup',       'font');
+  setupGroup('styleGroup', 'style', updateStyleUI);
+  setupGroup('posGroup',   'pos');
+  setupGroup('fmtGroup',   'fmt');
+  setupGroup('fontGroup',  'font');
 
-  /* Mostra/esconde seção de tamanho conforme o estilo */
-  function updateOverlaySizeVisibility() {
-    const sec = document.getElementById('overlaySizeSection');
-    if (!sec) return;
-    sec.classList.toggle('hidden', state.style !== 'overlay');
-    const opacityRow = document.getElementById('opacityRow');
-    const isSolid = state.style === 'white' || state.style === 'dark';
+  function updateStyleUI() {
+    const sec        = $('overlaySizeSection');
+    const opacityRow = $('opacityRow');
+    const isSolid    = state.style === 'white' || state.style === 'dark';
+    if (sec)        sec.classList.toggle('hidden', state.style !== 'overlay');
     if (opacityRow) opacityRow.style.display = isSolid ? 'flex' : 'none';
   }
-  updateOverlaySizeVisibility();
+  updateStyleUI();
 
   /* -------------------------------------------------------
-     SLIDER DE TAMANHO DE FONTE (controla tudo no overlay)
+     SLIDER — opacidade (modos sólidos)
+  ------------------------------------------------------- */
+  const opacitySlider = $('opacitySlider');
+  const opacityVal    = $('opacityVal');
+  if (opacitySlider) {
+    opacitySlider.addEventListener('input', () => {
+      const pct = parseInt(opacitySlider.value);
+      state.barOpacity = pct / 100;
+      if (opacityVal) opacityVal.textContent = pct + '%';
+      render();
+    });
+  }
+
+  /* -------------------------------------------------------
+     SLIDER — tamanho de fonte do overlay
   ------------------------------------------------------- */
   const fontSizeSlider = $('fontSizeSlider');
   const fontSizeVal    = $('fontSizeVal');
@@ -110,25 +122,16 @@
     fontSizeSlider.addEventListener('input', () => {
       const pct = parseInt(fontSizeSlider.value);
       state.fontScale   = pct / 100;
-      // overlaySize mapeado pelo valor do slider para manter compatibilidade com render.js
       state.overlaySize = pct <= 80 ? 'sm' : pct <= 120 ? 'md' : 'lg';
-      fontSizeVal.textContent = pct + '%';
+      if (fontSizeVal) fontSizeVal.textContent = pct + '%';
       render();
     });
   }
 
-  const opacitySlider = document.getElementById('opacitySlider');
-  const opacityVal    = document.getElementById('opacityVal');
-  if (opacitySlider) {
-    opacitySlider.addEventListener('input', () => {
-      const pct = parseInt(opacitySlider.value);
-      state.barOpacity = pct / 100;
-      opacityVal.textContent = pct + '%';
-      render();
-    });
-  }
-
-  const signatureInput = document.getElementById('signatureInput');
+  /* -------------------------------------------------------
+     CAMPO DE ASSINATURA
+  ------------------------------------------------------- */
+  const signatureInput = $('signatureInput');
   if (signatureInput) {
     signatureInput.addEventListener('input', () => {
       state.signature = signatureInput.value.trim();
@@ -149,85 +152,43 @@
   }
 
   /* -------------------------------------------------------
-     FIELD TOGGLES unificados (dentro da order-list)
+     TOGGLES DE CAMPOS VISÍVEIS
   ------------------------------------------------------- */
   document.querySelectorAll('.field-toggle').forEach(chk => {
     chk.addEventListener('change', () => {
-      const key = chk.dataset.field;
-      state.visible[key] = chk.checked;
+      state.visible[chk.dataset.field] = chk.checked;
       render();
     });
   });
 
   /* -------------------------------------------------------
-     TEMA DA INTERFACE
-  ------------------------------------------------------- */
-  function applyTheme(theme) {
-    const root = document.documentElement;
-    if (theme === 'dark') {
-      root.setAttribute('data-theme', 'dark');
-    } else if (theme === 'light') {
-      root.removeAttribute('data-theme');
-    } else {
-      // Sistema
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      prefersDark ? root.setAttribute('data-theme','dark') : root.removeAttribute('data-theme');
-    }
-  }
-
-  // Inicializa com preferência do sistema
-  applyTheme('system');
-
-  // Escuta mudança do sistema em tempo real
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
-    const active = document.querySelector('#themeGroup .opt-btn.active');
-    if (active && active.dataset.value === 'system') applyTheme('system');
-  });
-
-  const themeGroup = $('themeGroup');
-  if (themeGroup) {
-    themeGroup.querySelectorAll('[data-value]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        themeGroup.querySelectorAll('[data-value]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        applyTheme(btn.dataset.value);
-      });
-    });
-  }
-
-  /* -------------------------------------------------------
      DRAG AND DROP — reordenação dos campos
   ------------------------------------------------------- */
   (function initOrderDrag() {
-    const list = document.getElementById('orderList');
+    const list = $('orderList');
     if (!list) return;
     let dragSrc = null;
 
     list.querySelectorAll('.order-item').forEach(item => {
       item.setAttribute('draggable', 'true');
-
       item.addEventListener('dragstart', e => {
         dragSrc = item;
         item.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
       });
-
       item.addEventListener('dragend', () => {
         item.classList.remove('dragging');
         list.querySelectorAll('.order-item').forEach(i => i.classList.remove('drag-over'));
         state.order = Array.from(list.querySelectorAll('.order-item')).map(i => i.dataset.key);
         render();
       });
-
       item.addEventListener('dragover', e => {
         e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
         if (item !== dragSrc) {
           list.querySelectorAll('.order-item').forEach(i => i.classList.remove('drag-over'));
           item.classList.add('drag-over');
         }
       });
-
       item.addEventListener('drop', e => {
         e.preventDefault();
         if (dragSrc && dragSrc !== item) {
@@ -241,29 +202,47 @@
   })();
 
   /* -------------------------------------------------------
+     TEMA DA INTERFACE
+  ------------------------------------------------------- */
+  function applyTheme(theme) {
+    const root = document.documentElement;
+    if (theme === 'dark') {
+      root.setAttribute('data-theme', 'dark');
+    } else if (theme === 'light') {
+      root.removeAttribute('data-theme');
+    } else {
+      window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? root.setAttribute('data-theme', 'dark')
+        : root.removeAttribute('data-theme');
+    }
+  }
+  applyTheme('system');
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+    const active = document.querySelector('#themeGroup .opt-btn.active');
+    if (active && active.dataset.value === 'system') applyTheme('system');
+  });
+  const themeGroup = $('themeGroup');
+  if (themeGroup) {
+    themeGroup.querySelectorAll('[data-value]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        themeGroup.querySelectorAll('[data-value]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyTheme(btn.dataset.value);
+      });
+    });
+  }
+
+  /* -------------------------------------------------------
      SIDEBAR TOGGLE — mobile
   ------------------------------------------------------- */
   (function initSidebarToggle() {
-    const toggle  = document.getElementById('sidebarToggle');
-    const sidebar = document.getElementById('sidebar');
+    const toggle  = $('sidebarToggle');
+    const sidebar = $('sidebar');
     if (!toggle || !sidebar) return;
-
-    // Começa colapsado em mobile
-    if (window.innerWidth <= 768) {
-      sidebar.classList.add('collapsed');
-    }
-
-    toggle.addEventListener('click', () => {
-      sidebar.classList.toggle('collapsed');
-    });
-
-    // Redefine ao redimensionar
+    if (window.innerWidth <= 768) sidebar.classList.add('collapsed');
+    toggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
     window.addEventListener('resize', () => {
-      if (window.innerWidth > 768) {
-        sidebar.classList.remove('collapsed');
-      } else if (!sidebar.classList.contains('collapsed')) {
-        sidebar.classList.add('collapsed');
-      }
+      if (window.innerWidth > 768) sidebar.classList.remove('collapsed');
     });
   })();
 
@@ -279,22 +258,11 @@
   /* -------------------------------------------------------
      UPLOAD — DRAG AND DROP
   ------------------------------------------------------- */
-  workspace.addEventListener('dragenter', e => {
-    e.preventDefault();
-    dropOverlay.classList.add('active');
-  });
-
-  workspace.addEventListener('dragover', e => {
-    e.preventDefault();
-  });
-
+  workspace.addEventListener('dragenter', e => { e.preventDefault(); dropOverlay.classList.add('active'); });
+  workspace.addEventListener('dragover',  e => { e.preventDefault(); });
   workspace.addEventListener('dragleave', e => {
-    // Só esconde se saiu do workspace (não de um filho)
-    if (!workspace.contains(e.relatedTarget)) {
-      dropOverlay.classList.remove('active');
-    }
+    if (!workspace.contains(e.relatedTarget)) dropOverlay.classList.remove('active');
   });
-
   workspace.addEventListener('drop', e => {
     e.preventDefault();
     dropOverlay.classList.remove('active');
@@ -304,28 +272,14 @@
   });
 
   /* -------------------------------------------------------
-     UPLOAD — TOUCH (mobile)
-  ------------------------------------------------------- */
-  // Permite abrir o seletor de arquivo tocando na área de preview
-  workspace.addEventListener('click', e => {
-    // Só abre se clicar na área vazia (empty state visível)
-    if (emptyState.style.display !== 'none' ||
-        !emptyState.offsetParent) return;
-    if (e.target === workspace || e.target === emptyState ||
-        emptyState.contains(e.target)) {
-      fileInput.click();
-    }
-  });
-
-  /* -------------------------------------------------------
-     CARREGAR ARQUIVO
+     CARREGAR — ÚNICO ARQUIVO
   ------------------------------------------------------- */
   async function loadFile(file) {
     showToast('Lendo metadados…');
     const url = URL.createObjectURL(file);
     const img = new Image();
     img.onerror = () => { URL.revokeObjectURL(url); showToast('Erro ao carregar a imagem.'); };
-    img.onload = async () => {
+    img.onload  = async () => {
       state.img = img;
       URL.revokeObjectURL(url);
       const raw    = await window.FrametaExif.parse(file);
@@ -334,20 +288,25 @@
       updateExifPanel(result);
       render();
       exportBtn.disabled = false;
-      emptyState.style.display       = 'none';
+      emptyState.style.display      = 'none';
       previewContainer.style.display = 'flex';
-      if (result.ok) showToast('EXIF carregado com sucesso.');
-      else showToast('Foto carregada. ' + (result.error || 'Sem dados EXIF.'));
+      showToast(result.ok ? 'EXIF carregado com sucesso.' : 'Foto carregada. ' + (result.error || ''));
     };
     img.src = url;
   }
 
+  /* -------------------------------------------------------
+     CARREGAR — BATCH (múltiplos arquivos)
+     Configurações globais aplicadas a todas as fotos.
+     EXIF de cada foto exibido no painel ao navegar.
+  ------------------------------------------------------- */
   async function loadBatch(files) {
     if (!files || files.length === 0) return;
 
+    // Arquivo único — comportamento normal
     if (files.length === 1) {
-      loadFile(files[0]);
       hideBatchUI();
+      loadFile(files[0]);
       return;
     }
 
@@ -356,47 +315,37 @@
     state.batchIndex = 0;
 
     for (const file of files) {
-      // Cria blob URL permanente para a imagem (não revoga)
       const blobUrl = URL.createObjectURL(file);
-
       const img = await new Promise(res => {
-        const i  = new Image();
+        const i = new Image();
         i.onload  = () => res(i);
-        i.onerror = () => res(null);
-        i.src     = blobUrl;
+        i.onerror = () => { URL.revokeObjectURL(blobUrl); res(null); };
+        i.src = blobUrl;
       });
-      if (!img) { URL.revokeObjectURL(blobUrl); continue; }
+      if (!img) continue;
 
+      // Parse EXIF e serialização profunda para isolar do buffer binário
       const raw    = await window.FrametaExif.parse(file);
       const result = window.FrametaExif.extract(raw);
-
-      // Copia profunda dos fields para isolar do buffer original
       const safeFields = JSON.parse(JSON.stringify(result.fields || {}));
-
-      // Reconstrói result sem referências ao buffer binário
       const safeResult = {
         ok:     result.ok,
         error:  result.error || null,
         fields: safeFields,
-        _raw:   { _ok: raw && raw._ok },
+        _raw:   { _ok: !!(raw && raw._ok) },
         _log:   [],
       };
-
-      const baseName = file.name.replace(/\.[^.]+$/, '');
 
       state.batch.push({
         img,
         blobUrl,
         fields:   safeFields,
         result:   safeResult,
-        filename: baseName,
+        filename: file.name.replace(/\.[^.]+$/, ''),
       });
     }
 
-    if (state.batch.length === 0) {
-      showToast('Nenhuma imagem válida.');
-      return;
-    }
+    if (state.batch.length === 0) { showToast('Nenhuma imagem válida.'); return; }
 
     showBatchUI();
     buildFilmstrip();
@@ -404,11 +353,14 @@
     showToast(state.batch.length + ' fotos carregadas.');
   }
 
+  /* -------------------------------------------------------
+     BATCH — UI helpers
+  ------------------------------------------------------- */
   function showBatchUI() {
-    const filmstrip      = document.getElementById('filmstrip');
-    const exportAllBtn   = document.getElementById('exportAllBtn');
-    const batchCounter   = document.getElementById('batchCounter');
-    const exportBtnLabel = document.getElementById('exportBtnLabel');
+    const filmstrip      = $('filmstrip');
+    const exportAllBtn   = $('exportAllBtn');
+    const batchCounter   = $('batchCounter');
+    const exportBtnLabel = $('exportBtnLabel');
     if (filmstrip)      filmstrip.style.display    = 'flex';
     if (exportAllBtn)   exportAllBtn.style.display = 'flex';
     if (batchCounter)   batchCounter.classList.add('visible');
@@ -417,29 +369,27 @@
   }
 
   function hideBatchUI() {
-    const filmstrip      = document.getElementById('filmstrip');
-    const exportAllBtn   = document.getElementById('exportAllBtn');
-    const batchCounter   = document.getElementById('batchCounter');
-    const exportBtnLabel = document.getElementById('exportBtnLabel');
+    const filmstrip      = $('filmstrip');
+    const exportAllBtn   = $('exportAllBtn');
+    const batchCounter   = $('batchCounter');
+    const exportBtnLabel = $('exportBtnLabel');
     if (filmstrip)      filmstrip.style.display    = 'none';
     if (exportAllBtn)   exportAllBtn.style.display = 'none';
     if (batchCounter)   batchCounter.classList.remove('visible');
     if (exportBtnLabel) exportBtnLabel.textContent = 'Baixar foto';
-    // Revoga blob URLs para liberar memória
-    state.batch.forEach(item => {
-      if (item.blobUrl) URL.revokeObjectURL(item.blobUrl);
-    });
+    // Libera memória
+    state.batch.forEach(item => { if (item.blobUrl) URL.revokeObjectURL(item.blobUrl); });
     state.batch      = [];
     state.batchIndex = 0;
   }
 
   function updateBatchCounter() {
-    const el = document.getElementById('batchCounter');
+    const el = $('batchCounter');
     if (el) el.textContent = (state.batchIndex + 1) + ' / ' + state.batch.length;
   }
 
   function buildFilmstrip() {
-    const track = document.getElementById('filmstripTrack');
+    const track = $('filmstripTrack');
     if (!track) return;
     track.innerHTML = '';
     state.batch.forEach((item, i) => {
@@ -447,9 +397,9 @@
       thumb.className = 'filmstrip-thumb' + (i === 0 ? ' active' : '');
       thumb.dataset.index = i;
       const tImg = document.createElement('img');
-      tImg.src = item.img.src;
+      tImg.src = item.blobUrl;
       const idx = document.createElement('span');
-      idx.className = 'thumb-index';
+      idx.className   = 'thumb-index';
       idx.textContent = i + 1;
       thumb.appendChild(tImg);
       thumb.appendChild(idx);
@@ -463,45 +413,50 @@
     state.batchIndex = index;
     const item = state.batch[index];
 
+    // Atualiza estado global com dados desta foto
     state.img    = item.img;
     state.fields = item.fields;
 
-    const fi = document.getElementById('filenameInput');
+    // Atualiza campo de nome do arquivo
+    const fi = $('filenameInput');
     if (fi) fi.value = item.filename || '';
 
+    // Atualiza painel EXIF
     updateExifPanel(item.result);
+
+    // Renderiza e exibe
     render();
     exportBtn.disabled = false;
     emptyState.style.display       = 'none';
     previewContainer.style.display = 'flex';
     updateBatchCounter();
 
+    // Destaca thumb ativo
     document.querySelectorAll('.filmstrip-thumb').forEach((t, i) => {
       t.classList.toggle('active', i === index);
     });
 
-    const track  = document.getElementById('filmstripTrack');
+    // Scroll para thumb ativo
+    const track  = $('filmstripTrack');
     const active = track && track.querySelector('.filmstrip-thumb.active');
-    if (active) active.scrollIntoView({
-      behavior: 'smooth', inline: 'center', block: 'nearest'
-    });
+    if (active) active.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }
 
   /* -------------------------------------------------------
      PAINEL EXIF
   ------------------------------------------------------- */
   function updateExifPanel(result) {
-    // Reset completo antes de popular
+    // Reset completo
     exifEmpty.style.display = 'none';
     exifData.style.display  = 'block';
     exifList.innerHTML      = '';
     exifStatus.className    = 'exif-status';
     exifStatus.textContent  = '';
 
-    const debugBlock = document.getElementById('debugBlock');
+    const debugBlock = $('debugBlock');
     if (debugBlock) debugBlock.style.display = 'none';
 
-    exifStatus.className = 'exif-status';
+    // Status
     if (result.ok) {
       exifStatus.classList.add('ok');
       exifStatus.textContent = '✓ EXIF detectado';
@@ -513,18 +468,18 @@
       exifStatus.textContent = '✕ Sem EXIF';
     }
 
-    // Mensagem explicativa quando não há dados de câmera
-    exifList.innerHTML = '';
+    // Mensagem quando sem dados
     if (!result.ok) {
       const msg = document.createElement('div');
       msg.style.cssText = 'font-size:12px;color:#787878;line-height:1.7;margin-top:4px';
-      const isStripped = result._raw && result._raw._ok;
-      msg.innerHTML = isStripped
-        ? `Esta foto teve os metadados de câmera removidos — provavelmente foi exportada pelo <strong>Instagram, WhatsApp ou similar</strong>.<br><br>Use o JPEG original saído da câmera ou exportado pelo <strong>Lightroom/Capture One</strong>.`
-        : `Nenhum bloco EXIF encontrado neste arquivo.<br><br>Tente com um JPEG original da câmera.`;
+      msg.innerHTML = (result._raw && result._raw._ok)
+        ? `Esta foto teve os metadados removidos (Instagram, WhatsApp etc.).<br><br>Use o JPEG original da câmera ou exportado pelo Lightroom.`
+        : `Nenhum bloco EXIF encontrado.<br><br>Tente com um JPEG original da câmera.`;
       exifList.appendChild(msg);
       return;
     }
+
+    // Campos EXIF
     const display = [
       ['Câmera',     result.fields.camera],
       ['Lente',      result.fields.lens],
@@ -545,23 +500,23 @@
     });
     if (exifList.children.length === 0) {
       const msg = document.createElement('div');
-      msg.className = 'exif-val muted';
+      msg.className   = 'exif-val muted';
       msg.textContent = result.error || 'Nenhum campo disponível.';
       exifList.appendChild(msg);
     }
 
-    if (result._raw) {
-      const debugBlock = document.getElementById('debugBlock');
-      const debugPre   = document.getElementById('debugPre');
+    // Debug block (apenas para foto única, não batch)
+    if (result._raw && result._log && result._log.length > 0) {
+      const debugBlock = $('debugBlock');
+      const debugPre   = $('debugPre');
       if (debugBlock && debugPre) {
         debugBlock.style.display = 'block';
-        const log  = result._log || [];
         const safe = {};
         Object.entries(result._raw).forEach(([k, v]) => {
           if (!k.startsWith('_')) safe[k] = v;
         });
         debugPre.textContent =
-          '── LOG ──\n' + log.join('\n') +
+          '── LOG ──\n' + result._log.join('\n') +
           '\n\n── RAW FIELDS ──\n' + JSON.stringify(safe, null, 2);
       }
     }
@@ -587,44 +542,64 @@
   }
 
   /* -------------------------------------------------------
-     EXPORTAÇÃO
+     EXPORTAÇÃO — arquivo único
   ------------------------------------------------------- */
   exportBtn.addEventListener('click', () => {
     if (!state.img) return;
     exportBtn.disabled = true;
     showToast('Preparando download…');
-
     mainCanvas.toBlob(blob => {
-      const url = URL.createObjectURL(blob);
-      const a   = document.createElement('a');
-      a.href     = url;
-      const filenameInput = document.getElementById('filenameInput');
-      const rawName = filenameInput ? filenameInput.value.trim() : '';
+      const filenameInput = $('filenameInput');
+      const rawName  = filenameInput ? filenameInput.value.trim() : '';
       const safeName = rawName
         ? rawName.replace(/[^a-zA-Z0-9_\-\. ]/g, '').replace(/\s+/g, '_')
         : 'frameta_' + Date.now();
-      a.download = safeName.endsWith('.jpg') ? safeName : safeName + '.jpg';
+      const filename = safeName.endsWith('.jpg') ? safeName : safeName + '.jpg';
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.href     = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
       a.click();
+      document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       exportBtn.disabled = false;
       showToast('Download iniciado!');
     }, 'image/jpeg', 0.95);
   });
 
-  const exportAllBtn = document.getElementById('exportAllBtn');
+  /* -------------------------------------------------------
+     EXPORTAÇÃO — batch (ZIP via JSZip)
+  ------------------------------------------------------- */
+  const exportAllBtn = $('exportAllBtn');
   if (exportAllBtn) {
     exportAllBtn.addEventListener('click', async () => {
       if (state.batch.length === 0) return;
       exportAllBtn.disabled = true;
-      showToast('Preparando downloads…');
+      showToast('Preparando ZIP…');
 
-      const savedIndex  = state.batchIndex;
-      const savedImg    = state.img;
-      const savedFields = state.fields;
+      // Carrega JSZip dinamicamente
+      if (!window.JSZip) {
+        await new Promise((res, rej) => {
+          const s = document.createElement('script');
+          s.src     = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+          s.onload  = res;
+          s.onerror = rej;
+          document.head.appendChild(s);
+        });
+      }
+
+      const zip          = new window.JSZip();
+      const savedImg     = state.img;
+      const savedFields  = state.fields;
+      const savedIndex   = state.batchIndex;
 
       for (let i = 0; i < state.batch.length; i++) {
         const item = state.batch[i];
+        showToast('Processando ' + (i + 1) + ' de ' + state.batch.length + '…');
 
+        // Renderiza esta foto com as configurações globais atuais
         window.FrametaRender.draw(mainCanvas, item.img, item.fields, {
           style:       state.style,
           pos:         state.pos,
@@ -633,58 +608,49 @@
           overlaySize: state.overlaySize,
           fontScale:   state.fontScale,
           barOpacity:  state.barOpacity,
+          signature:   state.signature,
           order:       state.order,
           visible:     state.visible,
-          signature:   state.signature,
         });
 
-        showToast('Baixando ' + (i + 1) + ' de ' + state.batch.length + '…');
-
-        await new Promise(resolve => {
-          mainCanvas.toBlob(async blob => {
-            const filename =
-              (item.filename || ('frameta_' + (i + 1))) + '.jpg';
-
-            const blobCopy = blob.slice(0, blob.size, 'image/jpeg');
-            const objUrl   = URL.createObjectURL(blobCopy);
-            const link     = document.createElement('a');
-            link.href      = objUrl;
-            link.download  = filename;
-            link.style.display = 'none';
-            document.body.appendChild(link);
-
-            await new Promise(r => setTimeout(r, 300));
-            link.click();
-
-            await new Promise(r => setTimeout(r, 1800));
-            document.body.removeChild(link);
-            URL.revokeObjectURL(objUrl);
-            resolve();
-          }, 'image/jpeg', 0.95);
-        });
+        const blob = await new Promise(res => mainCanvas.toBlob(res, 'image/jpeg', 0.95));
+        const name = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
+        zip.file(name, blob);
       }
 
+      // Restaura estado da foto ativa
       state.img    = savedImg;
       state.fields = savedFields;
       activateBatchItem(savedIndex);
+
+      // Gera e baixa o ZIP
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const zipUrl  = URL.createObjectURL(zipBlob);
+      const a       = document.createElement('a');
+      a.href     = zipUrl;
+      a.download = 'frameta_batch_' + Date.now() + '.zip';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(zipUrl), 2000);
+
       exportAllBtn.disabled = false;
-      showToast('Todas as ' + state.batch.length + ' fotos baixadas!');
+      showToast('ZIP com ' + state.batch.length + ' fotos baixado!');
     });
   }
 
-  const filmPrev = document.getElementById('filmPrev');
-  const filmNext = document.getElementById('filmNext');
-  if (filmPrev) {
-    filmPrev.addEventListener('click', () => {
-      if (state.batchIndex > 0) activateBatchItem(state.batchIndex - 1);
-    });
-  }
-  if (filmNext) {
-    filmNext.addEventListener('click', () => {
-      if (state.batchIndex < state.batch.length - 1)
-        activateBatchItem(state.batchIndex + 1);
-    });
-  }
+  /* -------------------------------------------------------
+     NAVEGAÇÃO DO FILMSTRIP
+  ------------------------------------------------------- */
+  const filmPrev = $('filmPrev');
+  const filmNext = $('filmNext');
+  if (filmPrev) filmPrev.addEventListener('click', () => {
+    if (state.batchIndex > 0) activateBatchItem(state.batchIndex - 1);
+  });
+  if (filmNext) filmNext.addEventListener('click', () => {
+    if (state.batchIndex < state.batch.length - 1) activateBatchItem(state.batchIndex + 1);
+  });
 
   /* -------------------------------------------------------
      TOAST

@@ -88,10 +88,11 @@ window.FrametaRender = (() => {
     const isBottom = pos.startsWith('b');
     const isLeft   = pos.endsWith('l');
     const isRight  = pos.endsWith('r');
-    const isCenter = pos.endsWith('c') || pos === 'mc';
 
-    /* ── Canvas size ──────────────────────────────────── */
+    /* ── Canvas — sempre mantém proporção da imagem ───── */
+    // Nenhum estilo expande o canvas. A barra é sempre sobreposição.
     const barH = Math.max(90, Math.round(cropW * 0.062));
+
     canvas.width  = cropW;
     canvas.height = cropH;
 
@@ -132,6 +133,7 @@ window.FrametaRender = (() => {
         items.push({ key, value: val });
       });
 
+      // Assinatura do usuário (opcional) — antes da marca
       if (signature) {
         items.push({ key: '_signature', value: signature, isSignature: true });
       }
@@ -139,7 +141,7 @@ window.FrametaRender = (() => {
       // Pill obrigatório de marca — sempre ao final
       items.push({ key: '_brand', value: 'frameta.vercel.app', isBrand: true });
 
-      if (items.length === 1) return; // só a marca, sem dados — não renderiza
+      if (items.length <= 1) return; // sem dados reais — não renderiza
 
       /* Mede cada pill — incluindo o de marca */
       ctx.textBaseline = 'middle';
@@ -147,19 +149,16 @@ window.FrametaRender = (() => {
         const isCamLens   = item.key === 'camera' || item.key === 'lens';
         const isBrand     = !!item.isBrand;
         const isSignature = !!item.isSignature;
-        const fs = (isBrand || isSignature)
+        const isDiscrete  = isBrand || isSignature;
+        const fs = isDiscrete
           ? Math.max(9, Math.round(baseFs * 0.60))
           : baseFs;
-        const fw = (isBrand || isSignature)
-          ? '300'
-          : (item.key === 'camera') ? '700' : '400';
+        const fw = isDiscrete ? '300' : item.key === 'camera' ? '700' : '400';
         ctx.font = `${fw} ${fs}px ${fontFam}`;
         const tw = ctx.measureText(item.value).width;
-        const px = (isBrand || isSignature) ? Math.round(fs * 0.65) : pillPadX;
-        const py = (isBrand || isSignature) ? Math.round(fs * 0.30) : pillPadY;
-        const pw = tw + px * 2;
-        const ph = fs + py * 2;
-        return { ...item, fs, fw, tw, pw, ph, px, py };
+        const px = isDiscrete ? Math.round(fs * 0.65) : pillPadX;
+        const py = isDiscrete ? Math.round(fs * 0.30) : pillPadY;
+        return { ...item, fs, fw, tw, pw: tw + px * 2, ph: fs + py * 2, px, py, isDiscrete };
       });
 
       // Largura do bloco = pill mais largo
@@ -183,84 +182,71 @@ window.FrametaRender = (() => {
       else               blockY = Math.round((cropH - totalPillH) / 2);
 
       /* Desenha cada pill */
-      const textAlign = isRight ? 'right' : isCenter ? 'center' : 'left';
-      ctx.textAlign = textAlign;
       let currentY = blockY;
       measured.forEach((item, idx) => {
-        const isCamLens   = item.key === 'camera' || item.key === 'lens';
-        const isBrand     = !!item.isBrand;
-        const isSignature = !!item.isSignature;
+        const isBrand    = !!item.isBrand;
+        const isDiscrete = !!item.isDiscrete;
 
-        // Gap extra antes da marca e assinatura
-        if ((isBrand || isSignature) && idx > 0) currentY += Math.round(pillGap * 0.6);
+        // Gap extra antes de itens discretos (assinatura e marca)
+        if (isDiscrete && idx > 0) currentY += Math.round(pillGap * 0.6);
 
-        const bgAlpha = (isBrand || isSignature) ? 0.28 : isCamLens ? 0.52 : 0.42;
+        const bgAlpha = isDiscrete ? 0.28 : 0.42;
         ctx.fillStyle = `rgba(0,0,0,${bgAlpha})`;
         pill(ctx, blockX, currentY, item.pw, item.ph, pillRad);
         ctx.fill();
 
-        ctx.strokeStyle = (isBrand || isSignature) ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.12)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = isDiscrete ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.12)';
+        ctx.lineWidth   = 1;
         pill(ctx, blockX, currentY, item.pw, item.ph, pillRad);
         ctx.stroke();
 
         const textY = currentY + item.ph / 2;
-        let textX;
-        if (textAlign === 'right')       textX = blockX + item.pw - item.px;
-        else if (textAlign === 'center') textX = blockX + item.pw / 2;
-        else                             textX = blockX + item.px;
         ctx.font      = `${item.fw} ${item.fs}px ${fontFam}`;
-        ctx.fillStyle = (isBrand || isSignature) ? 'rgba(255,255,255,0.65)' : '#ffffff';
-        if (isBrand || isSignature) {
-          ctx.textAlign = textAlign;
-          ctx.fillText(item.value, textX, textY);
+        ctx.fillStyle = isDiscrete ? 'rgba(255,255,255,0.55)' : '#ffffff';
+
+        if (isDiscrete) {
+          ctx.fillText(item.value, blockX + item.px, textY);
         } else {
-          ctx.textAlign = textAlign;
-          outlineText(ctx, item.value, textX, textY, strokeW);
+          outlineText(ctx, item.value, blockX + item.px, textY, strokeW);
         }
 
         currentY += item.ph + pillGap;
       });
-      ctx.textAlign = 'left';
 
       return; // encerra o modo overlay
-
-      // Marca frameta discreta
-      const wmFs = Math.max(9, Math.round(baseFs * 0.55));
-      ctx.font      = `300 ${wmFs}px ${fontFam}`;
-      ctx.fillStyle = 'rgba(255,255,255,0.18)';
-      const wmText  = 'frameta';
-      const wmW     = ctx.measureText(wmText).width;
-      const wmPad   = margin;
-      const wmX     = isRight ? blockX - wmW - 8 : blockX + blockW - wmW;
-      const wmY     = isBottom
-        ? blockY - wmFs * 1.4
-        : blockY + totalPillH + wmFs * 1.1;
-      if (wmY > 0 && wmY < cropH) ctx.fillText(wmText, wmX, wmY);
-
-      return;
     }
 
     /* ════════════════════════════════════════════════════
-       MODO SÓLIDO — barra horizontal clássica
+       MODO SÓLIDO — barra horizontal sobre a imagem
     ════════════════════════════════════════════════════ */
     const pad = Math.round(barH * 0.28);
 
+    // barY sempre dentro da imagem (nunca expande)
     let barY;
     if (isTop)         barY = 0;
     else if (isBottom) barY = cropH - barH;
     else               barY = Math.floor((cropH - barH) / 2);
 
+    // Cor base com opacidade configurável
     const solidAlpha = Math.max(0, Math.min(1, barOpacity));
-    ctx.fillStyle = isDark ? `rgba(13,13,13,${solidAlpha})` : `rgba(255,255,255,${solidAlpha})`;
+    if (isDark) {
+      ctx.fillStyle = `rgba(13,13,13,${solidAlpha})`;
+    } else {
+      ctx.fillStyle = `rgba(255,255,255,${solidAlpha})`;
+    }
     ctx.fillRect(0, barY, cropW, barH);
 
-    ctx.strokeStyle = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
-    ctx.lineWidth   = 1;
-    ctx.beginPath();
-    const lineY = isTop ? barH : barY;
-    ctx.moveTo(0, lineY); ctx.lineTo(cropW, lineY);
-    ctx.stroke();
+    // Linha divisória proporcional à opacidade
+    if (solidAlpha > 0.1) {
+      ctx.strokeStyle = isDark
+        ? `rgba(255,255,255,${0.07 * solidAlpha})`
+        : `rgba(0,0,0,${0.06 * solidAlpha})`;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      const lineY = isTop ? barH : barY;
+      ctx.moveTo(0, lineY); ctx.lineTo(cropW, lineY);
+      ctx.stroke();
+    }
 
     const mainColor  = isDark ? '#ffffff' : '#0d0d0d';
     const mutedColor = isDark ? 'rgba(255,255,255,0.65)' : '#666666';
@@ -327,15 +313,6 @@ window.FrametaRender = (() => {
       rx = chipX - chipGap;
     });
 
-    if (signature) {
-      const sigFs = Math.max(10, Math.round(fsChip * 0.80));
-      ctx.font      = `300 ${sigFs}px ${fontFam}`;
-      ctx.fillStyle = mutedColor;
-      const sigW = ctx.measureText(signature).width;
-      const sigX = Math.floor((cropW - sigW) / 2);
-      ctx.fillText(signature, sigX, midY);
-    }
-
     if ((showCamera || showLens) && chips.length > 0) {
       const divX = rx - chipGap * 0.4;
       if (divX > leftX + 40) {
@@ -356,7 +333,6 @@ window.FrametaRender = (() => {
     if (rx - wmW - 16 > leftX + 60) {
       ctx.fillText(wmText, cropW - pad - wmW, barY + barH - wmFs * 0.8);
     }
-    ctx.textAlign = 'left';
   }
 
   return { draw };

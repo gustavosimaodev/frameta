@@ -1,8 +1,8 @@
 # Frameta — EXIF Watermark
 
-> Add your shooting data as a clean watermark to any photo, ready for Instagram and social media.
+> Adicione os dados técnicos das suas fotos como overlay diretamente sobre a imagem, pronto para o Instagram e outras redes sociais.
 
-![Version](https://img.shields.io/badge/version-0.2.0-0d0d0d)
+![Version](https://img.shields.io/badge/version-0.9.0-0d0d0d)
 ![Status](https://img.shields.io/badge/status-beta-c8a96e)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -10,71 +10,81 @@ Desenvolvido por **Gustavo de Morais Simão**
 
 ---
 
-## What it does
+## O que faz
 
-Frameta reads the EXIF metadata embedded in your photo and renders it as a styled bar — camera body, lens, shutter speed, aperture, ISO, focal length — exported in the exact dimensions each social platform expects.
+O Frameta lê automaticamente os metadados EXIF gravados pela sua câmera (corpo, lente, velocidade, abertura, ISO, focal) e os renderiza como pills tipográficos diretamente sobre a imagem — sem fundo sólido, sem alterar a proporção original.
 
-**No server. No account. No upload to third parties.** Everything runs in the browser via native binary JPEG parsing.
-
----
-
-## Features
-
-- Native EXIF binary parser — no CDN dependency, works offline
-- Reads: camera, lens, shutter, aperture, ISO, focal length, date
-- 3 watermark styles: white, dark, glass
-- 9 positioning options
-- 6 export formats: original, 1:1, 4:5, 9:16, 16:9, 1.91:1
-- Per-field visibility toggles
-- 3 font options: DM Sans, DM Mono, Serif
-- Drag-and-drop upload
-- EXIF status indicator (ok / limited / missing)
-- JPEG export at 95% quality
-- Zero runtime dependencies
+**Sem servidor. Sem conta. Sem upload para terceiros.** Tudo processa no browser.
 
 ---
 
-## Project structure
+## Funcionalidades
+
+- Parser EXIF binário nativo — sem dependências externas, funciona offline
+- Lê: câmera, lente, velocidade, abertura, ISO, focal, data
+- 3 estilos: Overlay, Branco, Escuro
+- Controle de opacidade da barra (estilos Branco e Escuro)
+- Controle de tamanho de fonte do overlay
+- 9 posições de overlay
+- 6 formatos de exportação: original, 1:1, 4:5, 9:16, 16:9, 1.91:1
+- Visibilidade e ordem dos campos personalizáveis (drag-and-drop)
+- Campo de assinatura livre (nome, perfil, copyright)
+- Escolha do nome do arquivo ao salvar
+- Batch mode: carrega múltiplas fotos, navega pelo filmstrip, exporta tudo em ZIP
+- 3 opções de fonte: DM Sans, DM Mono, Serif
+- Tema claro / escuro / sistema
+- Responsivo — funciona em desktop e mobile
+- Export JPEG 95%
+
+---
+
+## Estrutura do projeto
 
 ```
 frameta/
-├── index.html          # shell HTML — tabs, sidebar, workspace, panels
+├── index.html          # shell da app — tabs, sidebar, workspace, painéis
 ├── css/
-│   └── main.css        # design system — variables, layout, components
+│   └── main.css        # design system — variáveis, layout, componentes, mobile
 ├── js/
-│   ├── exif.js         # binary JPEG/TIFF EXIF parser (no dependencies)
-│   ├── render.js       # canvas rendering — watermark bar
-│   └── app.js          # controller — state, events, UI orchestration
+│   ├── exif.js         # parser binário JPEG/TIFF — sem dependências
+│   ├── render.js       # renderização canvas — overlay e barra sólida
+│   └── app.js          # controller — estado, eventos, UI, batch mode
 ├── README.md
-└── CHANGELOG.md
+├── CHANGELOG.md
+└── NOVIDADES.md
 ```
 
 ---
 
-## Architecture
+## Arquitetura
 
 ```
 fileInput / dragDrop
-       │
-       ▼
-  FrametaExif.parse(file)      ← reads first 256KB of JPEG binary
-       │
-       ▼
-  FrametaExif.extract(raw)     ← formats fields: shutter, aperture, ISO…
-       │
-       ├──► updateExifPanel()  ← displays metadata in the right panel
-       │
-       └──► FrametaRender.draw(canvas, img, fields, opts)
-                  │
-                  ▼
-             canvas.toBlob()   ← JPEG 95% quality download
+      │
+      ▼
+loadBatch(files)
+      │
+      ├─ arquivo único → loadFile() → FrametaExif.parse()
+      │                               FrametaExif.extract()
+      │                               updateExifPanel()
+      │                               render()
+      │
+      └─ múltiplos → batch[] com deep copy dos fields
+                     buildFilmstrip()
+                     activateBatchItem(0)
+                          │
+                          ▼
+                     FrametaRender.draw(canvas, img, fields, opts)
+                          │
+                          ▼
+                     canvas.toBlob() → download JPEG / ZIP
 ```
 
 ---
 
-## Getting started
+## Como usar
 
-### Run locally
+### Localmente
 
 ```bash
 git clone https://github.com/seu-usuario/frameta.git
@@ -82,36 +92,36 @@ cd frameta
 open index.html   # macOS
 ```
 
-No build step. No npm install. Just open the file.
+Sem build. Sem npm install.
 
-### Deploy to Vercel
+### Deploy no Vercel
 
-1. Push to GitHub
-2. Import at [vercel.com/new](https://vercel.com/new)
+1. Push para o GitHub
+2. Importe em [vercel.com/new](https://vercel.com/new)
 3. Framework preset: **Other** (static)
-4. Deploy — done.
+4. Deploy
 
 ---
 
-## Supported formats
+## Formatos suportados
 
-| Platform | Ratio | Resolution |
+| Plataforma | Proporção | Resolução base |
 |---|---|---|
 | Instagram Feed | 1:1 | 1080 × 1080 |
 | Instagram Portrait | 4:5 | 1080 × 1350 |
 | Instagram / TikTok Story | 9:16 | 1080 × 1920 |
 | YouTube / Wide | 16:9 | 1280 × 720 |
 | X / Twitter | 1.91:1 | 1600 × 836 |
-| Original | — | unchanged |
+| Original | — | sem alteração |
 
 ---
 
 ## Roadmap
 
-See [`CHANGELOG.md`](./CHANGELOG.md).
+Ver [`CHANGELOG.md`](./CHANGELOG.md) para versões lançadas e [`NOVIDADES.md`](./NOVIDADES.md) para o resumo em linguagem acessível.
 
 ---
 
-## License
+## Licença
 
 MIT © Gustavo de Morais Simão
