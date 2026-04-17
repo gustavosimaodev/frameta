@@ -27,6 +27,7 @@
     overlaySize: 'md',
     fontScale:   1.0,
     barOpacity:  1.0,
+    signature:   '',
     pos:         'bl',
     fmt:         'original',
     font:        'sans',
@@ -121,6 +122,14 @@
       const pct = parseInt(opacitySlider.value);
       state.barOpacity = pct / 100;
       opacityVal.textContent = pct + '%';
+      render();
+    });
+  }
+
+  const signatureInput = document.getElementById('signatureInput');
+  if (signatureInput) {
+    signatureInput.addEventListener('input', () => {
+      state.signature = signatureInput.value.trim();
       render();
     });
   }
@@ -401,6 +410,7 @@
       overlaySize: state.overlaySize,
       fontScale:   state.fontScale,
       barOpacity:  state.barOpacity,
+      signature:   state.signature,
       order:       state.order,
       visible:     state.visible,
     });

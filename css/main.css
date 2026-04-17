@@ -433,6 +433,30 @@ input:checked + .toggle-slider::before { transform: translateX(12px); }
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
+/* --- ASSINATURA -------------------------------------------- */
+.signature-input {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--paper-3);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  transition: border-color var(--transition);
+  margin-top: 4px;
+}
+.signature-input:focus {
+  outline: none;
+  border-color: var(--ink-3);
+}
+.signature-hint {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--ink-4);
+  margin-top: 4px;
+}
+
 /* --- SCROLLBAR --------------------------------------------- */
 ::-webkit-scrollbar { width: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }

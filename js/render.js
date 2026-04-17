@@ -60,6 +60,7 @@ window.FrametaRender = (() => {
       overlaySize = 'md',
       fontScale   = 1.0,
       barOpacity  = 1.0,
+      signature   = '',
       visible     = {},
       order       = ['camera','lens','shutter','aperture','iso','focal','date'],
     } = opts;
@@ -131,6 +132,10 @@ window.FrametaRender = (() => {
         items.push({ key, value: val });
       });
 
+      if (signature) {
+        items.push({ key: '_signature', value: signature, isSignature: true });
+      }
+
       // Pill obrigatório de marca — sempre ao final
       items.push({ key: '_brand', value: 'frameta.vercel.app', isBrand: true });
 
@@ -139,19 +144,19 @@ window.FrametaRender = (() => {
       /* Mede cada pill — incluindo o de marca */
       ctx.textBaseline = 'middle';
       const measured = items.map(item => {
-        const isCamLens = item.key === 'camera' || item.key === 'lens';
-        const isBrand   = !!item.isBrand;
-        // Marca: fonte menor e mais leve
-        const fs = isBrand
+        const isCamLens   = item.key === 'camera' || item.key === 'lens';
+        const isBrand     = !!item.isBrand;
+        const isSignature = !!item.isSignature;
+        const fs = (isBrand || isSignature)
           ? Math.max(9, Math.round(baseFs * 0.60))
           : isCamLens
             ? Math.max(13, Math.round(baseFs * (item.key === 'camera' ? 1.15 : 0.88)))
             : baseFs;
-        const fw = isBrand ? '300' : isCamLens ? '700' : '500';
+        const fw = (isBrand || isSignature) ? '300' : isCamLens ? '700' : '500';
         ctx.font = `${fw} ${fs}px ${fontFam}`;
         const tw = ctx.measureText(item.value).width;
-        const px = isBrand ? Math.round(fs * 0.65) : pillPadX;
-        const py = isBrand ? Math.round(fs * 0.30) : pillPadY;
+        const px = (isBrand || isSignature) ? Math.round(fs * 0.65) : pillPadX;
+        const py = (isBrand || isSignature) ? Math.round(fs * 0.30) : pillPadY;
         const pw = tw + px * 2;
         const ph = fs + py * 2;
         return { ...item, fs, fw, tw, pw, ph, px, py };
@@ -180,28 +185,28 @@ window.FrametaRender = (() => {
       /* Desenha cada pill */
       let currentY = blockY;
       measured.forEach((item, idx) => {
-        const isCamLens = item.key === 'camera' || item.key === 'lens';
-        const isBrand   = !!item.isBrand;
+        const isCamLens   = item.key === 'camera' || item.key === 'lens';
+        const isBrand     = !!item.isBrand;
+        const isSignature = !!item.isSignature;
 
-        // Gap extra antes da marca
-        if (isBrand && idx > 0) currentY += Math.round(pillGap * 0.6);
+        // Gap extra antes da marca e assinatura
+        if ((isBrand || isSignature) && idx > 0) currentY += Math.round(pillGap * 0.6);
 
-        const bgAlpha = isBrand ? 0.28 : isCamLens ? 0.52 : 0.42;
+        const bgAlpha = (isBrand || isSignature) ? 0.28 : isCamLens ? 0.52 : 0.42;
         ctx.fillStyle = `rgba(0,0,0,${bgAlpha})`;
         pill(ctx, blockX, currentY, item.pw, item.ph, pillRad);
         ctx.fill();
 
-        ctx.strokeStyle = isBrand ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.12)';
+        ctx.strokeStyle = (isBrand || isSignature) ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.12)';
         ctx.lineWidth = 1;
         pill(ctx, blockX, currentY, item.pw, item.ph, pillRad);
         ctx.stroke();
 
         const textY = currentY + item.ph / 2;
         ctx.font      = `${item.fw} ${item.fs}px ${fontFam}`;
-        ctx.fillStyle = isBrand ? 'rgba(255,255,255,0.50)' : '#ffffff';
+        ctx.fillStyle = (isBrand || isSignature) ? 'rgba(255,255,255,0.65)' : '#ffffff';
 
-        if (isBrand) {
-          // Marca sem outline — discreta
+        if (isBrand || isSignature) {
           ctx.fillText(item.value, blockX + item.px, textY);
         } else {
           outlineText(ctx, item.value, blockX + item.px, textY, strokeW);
@@ -313,6 +318,15 @@ window.FrametaRender = (() => {
       ctx.fillText(chip, chipX + chipPadX, midY);
       rx = chipX - chipGap;
     });
+
+    if (signature) {
+      const sigFs = Math.max(10, Math.round(fsChip * 0.80));
+      ctx.font      = `300 ${sigFs}px ${fontFam}`;
+      ctx.fillStyle = mutedColor;
+      const sigW = ctx.measureText(signature).width;
+      const sigX = Math.floor((cropW - sigW) / 2);
+      ctx.fillText(signature, sigX, midY);
+    }
 
     if ((showCamera || showLens) && chips.length > 0) {
       const divX = rx - chipGap * 0.4;
