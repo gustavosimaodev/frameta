@@ -304,6 +304,20 @@
   });
 
   /* -------------------------------------------------------
+     UPLOAD — TOUCH (mobile)
+  ------------------------------------------------------- */
+  // Permite abrir o seletor de arquivo tocando na área de preview
+  workspace.addEventListener('click', e => {
+    // Só abre se clicar na área vazia (empty state visível)
+    if (emptyState.style.display !== 'none' ||
+        !emptyState.offsetParent) return;
+    if (e.target === workspace || e.target === emptyState ||
+        emptyState.contains(e.target)) {
+      fileInput.click();
+    }
+  });
+
+  /* -------------------------------------------------------
      CARREGAR ARQUIVO
   ------------------------------------------------------- */
   async function loadFile(file) {
@@ -627,21 +641,25 @@
         showToast('Baixando ' + (i + 1) + ' de ' + state.batch.length + '…');
 
         await new Promise(resolve => {
-          mainCanvas.toBlob(blob => {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-              const link     = document.createElement('a');
-              link.href      = reader.result;
-              link.download  = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
-              link.style.display = 'none';
-              document.body.appendChild(link);
-              link.click();
-              setTimeout(() => {
-                document.body.removeChild(link);
-                resolve();
-              }, 1500);
-            };
-            reader.readAsDataURL(blob);
+          mainCanvas.toBlob(async blob => {
+            const filename =
+              (item.filename || ('frameta_' + (i + 1))) + '.jpg';
+
+            const blobCopy = blob.slice(0, blob.size, 'image/jpeg');
+            const objUrl   = URL.createObjectURL(blobCopy);
+            const link     = document.createElement('a');
+            link.href      = objUrl;
+            link.download  = filename;
+            link.style.display = 'none';
+            document.body.appendChild(link);
+
+            await new Promise(r => setTimeout(r, 300));
+            link.click();
+
+            await new Promise(r => setTimeout(r, 1800));
+            document.body.removeChild(link);
+            URL.revokeObjectURL(objUrl);
+            resolve();
           }, 'image/jpeg', 0.95);
         });
       }

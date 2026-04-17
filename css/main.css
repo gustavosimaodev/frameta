@@ -635,9 +635,20 @@ input:checked + .toggle-slider::before { transform: translateX(12px); }
     height: auto;
   }
 
+  .app-column {
+    flex: 1;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .filmstrip {
+    flex-shrink: 0;
+  }
+
   #mainCanvas {
     max-width: calc(100vw - 24px);
     max-height: 80vw;
+    touch-action: none;
   }
 
   .exif-panel {
