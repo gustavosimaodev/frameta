@@ -191,18 +191,26 @@
           </div>
         </div>
 
-        <!-- Indicador de arrastar imagem (aparece quando formato != original) -->
+        <!-- Controles do canvas interativo -->
         <div class="reposition-hint" id="repositionHint" style="display:none">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="5 9 2 12 5 15"/>
-            <polyline points="9 5 12 2 15 5"/>
-            <polyline points="15 19 12 22 9 19"/>
-            <polyline points="19 9 22 12 19 15"/>
-            <line x1="2" y1="12" x2="22" y2="12"/>
-            <line x1="12" y1="2" x2="12" y2="22"/>
-          </svg>
-          <span>Arraste para reposicionar</span>
-          <button class="reposition-reset" id="repositionReset" title="Centralizar">↺</button>
+          <div class="reposition-top">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="5 9 2 12 5 15"/>
+              <polyline points="9 5 12 2 15 5"/>
+              <polyline points="15 19 12 22 9 19"/>
+              <polyline points="19 9 22 12 19 15"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <line x1="12" y1="2" x2="12" y2="22"/>
+            </svg>
+            <span>Arraste · use o zoom abaixo</span>
+            <button class="reposition-reset" id="repositionReset" title="Centralizar e resetar zoom">↺</button>
+          </div>
+          <div class="reposition-zoom">
+            <span class="zoom-label">−</span>
+            <input type="range" id="zoomSlider" min="100" max="300" value="100" step="5" />
+            <span class="zoom-label">+</span>
+            <span class="zoom-val" id="zoomVal">100%</span>
+          </div>
         </div>
 
         <div class="empty-state" id="emptyState">

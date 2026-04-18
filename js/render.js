@@ -62,6 +62,7 @@ window.FrametaRender = (() => {
       barOpacity  = 1.0,
       signature   = '',
       imgOffset   = { x: 0, y: 0 },
+      imgZoom     = 1.0,
       visible     = {},
       order       = ['camera','lens','shutter','aperture','iso','focal','date'],
     } = opts;
@@ -97,15 +98,26 @@ window.FrametaRender = (() => {
     canvas.width  = cropW;
     canvas.height = cropH;
 
-    /* ── Desenha a foto com offset interativo ─────────── */
-    // offset é percentual da diferença entre imagem fonte e crop
-    const maxShiftX = Math.max(0, sw - cropW);
-    const maxShiftY = Math.max(0, sh - cropH);
-    const shiftX    = Math.max(-maxShiftX/2, Math.min(maxShiftX/2, (imgOffset.x || 0) * maxShiftX / 2));
-    const shiftY    = Math.max(-maxShiftY/2, Math.min(maxShiftY/2, (imgOffset.y || 0) * maxShiftY / 2));
-    const ox = Math.floor((sw - cropW) / 2 - shiftX);
-    const oy = Math.floor((sh - cropH) / 2 - shiftY);
-    ctx.drawImage(img, ox, oy, cropW, cropH, 0, 0, cropW, cropH);
+    /* ── Desenha a foto com offset e zoom interativos ──── */
+    const zoom = Math.max(1, imgZoom || 1);
+    // Reduz a região fonte proporcionalmente ao zoom
+    const baseSrcW = Math.min(sw, sw / zoom);
+    const baseSrcH = Math.min(sh, sh / zoom);
+    const cropRatio = cropW / cropH;
+    const srcRatio  = baseSrcW / baseSrcH;
+    let finalW, finalH;
+    if (srcRatio > cropRatio) {
+      finalH = baseSrcH;
+      finalW = baseSrcH * cropRatio;
+    } else {
+      finalW = baseSrcW;
+      finalH = baseSrcW / cropRatio;
+    }
+    const maxSX = sw - finalW;
+    const maxSY = sh - finalH;
+    const ox = Math.floor(Math.max(0, Math.min(maxSX, maxSX / 2 - (imgOffset.x || 0) * maxSX / 2)));
+    const oy = Math.floor(Math.max(0, Math.min(maxSY, maxSY / 2 - (imgOffset.y || 0) * maxSY / 2)));
+    ctx.drawImage(img, ox, oy, finalW, finalH, 0, 0, cropW, cropH);
 
     /* ════════════════════════════════════════════════════
        MODO OVERLAY — coluna de pills

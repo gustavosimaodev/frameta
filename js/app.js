@@ -28,6 +28,7 @@
     overlaySize: 'md',
     fontScale:   1.0,
     imgOffset:   { x: 0, y: 0 },
+    imgZoom:     1.0,
     barOpacity:  1.0,
     signature:   '',
     batch:       [],
@@ -91,8 +92,12 @@
   setupGroup('posGroupOverlay', 'pos');
   setupGroup('posGroupSolid',   'pos');
   setupGroup('fmtGroup', 'fmt', () => {
-    // Ao trocar formato, reseta offset da imagem
     state.imgOffset = { x: 0, y: 0 };
+    state.imgZoom   = 1.0;
+    const zoomSlider = $('zoomSlider');
+    const zoomVal    = $('zoomVal');
+    if (zoomSlider) zoomSlider.value = 100;
+    if (zoomVal)    zoomVal.textContent = '100%';
     updateRepositionHint();
   });
   setupGroup('fontGroup',  'font');
@@ -143,6 +148,23 @@
   if (repositionReset) {
     repositionReset.addEventListener('click', () => {
       state.imgOffset = { x: 0, y: 0 };
+      state.imgZoom   = 1.0;
+      const zoomSlider = $('zoomSlider');
+      const zoomVal    = $('zoomVal');
+      if (zoomSlider) zoomSlider.value = 100;
+      if (zoomVal)    zoomVal.textContent = '100%';
+      render();
+    });
+  }
+
+  // Slider de zoom
+  const zoomSlider = $('zoomSlider');
+  const zoomVal    = $('zoomVal');
+  if (zoomSlider) {
+    zoomSlider.addEventListener('input', () => {
+      const pct = parseInt(zoomSlider.value);
+      state.imgZoom = pct / 100;
+      if (zoomVal) zoomVal.textContent = pct + '%';
       render();
     });
   }
@@ -383,8 +405,9 @@
     const img = new Image();
     img.onerror = () => { URL.revokeObjectURL(url); showToast('Erro ao carregar a imagem.'); };
     img.onload  = async () => {
-      state.img = img;
+      state.img       = img;
       state.imgOffset = { x: 0, y: 0 };
+      state.imgZoom   = 1.0;
       URL.revokeObjectURL(url);
       const raw    = await window.FrametaExif.parse(file);
       const result = window.FrametaExif.extract(raw);
@@ -521,6 +544,7 @@
     state.img       = item.img;
     state.fields    = item.fields;
     state.imgOffset = { x: 0, y: 0 };
+    state.imgZoom   = 1.0;
 
     // Atualiza campo de nome do arquivo
     const fi = $('filenameInput');
@@ -642,6 +666,7 @@
       barOpacity:  state.barOpacity,
       signature:   state.signature,
       imgOffset:   state.imgOffset,
+      imgZoom:     state.imgZoom,
       order:       state.order,
       visible:     state.visible,
     });
