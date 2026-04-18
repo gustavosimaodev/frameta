@@ -27,6 +27,7 @@
     style:       'overlay',
     overlaySize: 'md',
     fontScale:   1.0,
+    imgOffset:   { x: 0, y: 0 },
     barOpacity:  1.0,
     signature:   '',
     batch:       [],
@@ -85,19 +86,121 @@
     });
   }
 
-  setupGroup('styleGroup', 'style', updateStyleUI);
-  setupGroup('posGroup',   'pos');
-  setupGroup('fmtGroup',   'fmt');
+  setupGroup('styleGroup',    'style', updateStyleUI);
+  // Os dois grupos de posição compartilham o mesmo state.pos
+  setupGroup('posGroupOverlay', 'pos');
+  setupGroup('posGroupSolid',   'pos');
+  setupGroup('fmtGroup', 'fmt', () => {
+    // Ao trocar formato, reseta offset da imagem
+    state.imgOffset = { x: 0, y: 0 };
+    updateRepositionHint();
+  });
   setupGroup('fontGroup',  'font');
 
   function updateStyleUI() {
-    const sec        = $('overlaySizeSection');
+    const overlaySec = $('overlaySizeSection');
     const opacityRow = $('opacityRow');
+    const posOverlay = $('posGroupOverlay');
+    const posSolid   = $('posGroupSolid');
+    const isOverlay  = state.style === 'overlay';
     const isSolid    = state.style === 'white' || state.style === 'dark';
-    if (sec)        sec.classList.toggle('hidden', state.style !== 'overlay');
+
+    if (overlaySec) overlaySec.classList.toggle('hidden', !isOverlay);
     if (opacityRow) opacityRow.style.display = isSolid ? 'flex' : 'none';
+    if (posOverlay) posOverlay.style.display = isOverlay ? 'grid' : 'none';
+    if (posSolid)   posSolid.style.display   = isSolid  ? 'grid' : 'none';
+
+    // Sincroniza state.pos com o grupo ativo
+    if (isOverlay && !['tl','tr','bl','br'].includes(state.pos)) {
+      state.pos = 'bl';
+      posOverlay.querySelectorAll('[data-value]').forEach(b => {
+        b.classList.toggle('active', b.dataset.value === 'bl');
+      });
+    }
+    if (isSolid && !['tc','bc'].includes(state.pos)) {
+      state.pos = 'bc';
+      posSolid.querySelectorAll('[data-value]').forEach(b => {
+        b.classList.toggle('active', b.dataset.value === 'bc');
+      });
+    }
   }
   updateStyleUI();
+
+  /* -------------------------------------------------------
+     CANVAS INTERATIVO — drag para reposicionar a imagem
+  ------------------------------------------------------- */
+  function updateRepositionHint() {
+    const hint = $('repositionHint');
+    if (!hint) return;
+    const shouldShow = state.img && state.fmt !== 'original';
+    hint.style.display = shouldShow ? 'flex' : 'none';
+    if (mainCanvas) {
+      mainCanvas.classList.toggle('draggable', shouldShow);
+    }
+  }
+
+  const repositionReset = $('repositionReset');
+  if (repositionReset) {
+    repositionReset.addEventListener('click', () => {
+      state.imgOffset = { x: 0, y: 0 };
+      render();
+    });
+  }
+
+  // Drag da imagem no canvas
+  (function initCanvasDrag() {
+    if (!mainCanvas) return;
+    let dragging = false;
+    let startX   = 0;
+    let startY   = 0;
+    let startOX  = 0;
+    let startOY  = 0;
+
+    function getPoint(e) {
+      if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      return { x: e.clientX, y: e.clientY };
+    }
+
+    function onStart(e) {
+      if (!state.img || state.fmt === 'original') return;
+      e.preventDefault();
+      dragging = true;
+      const p = getPoint(e);
+      startX  = p.x;
+      startY  = p.y;
+      startOX = state.imgOffset.x;
+      startOY = state.imgOffset.y;
+      mainCanvas.classList.add('dragging');
+    }
+
+    function onMove(e) {
+      if (!dragging) return;
+      e.preventDefault();
+      const p = getPoint(e);
+      const rect = mainCanvas.getBoundingClientRect();
+      // Converte deslocamento em pixels para percentual do canvas
+      const dx = (p.x - startX) / rect.width  * 2;
+      const dy = (p.y - startY) / rect.height * 2;
+      state.imgOffset = {
+        x: Math.max(-1, Math.min(1, startOX + dx)),
+        y: Math.max(-1, Math.min(1, startOY + dy)),
+      };
+      render();
+    }
+
+    function onEnd() {
+      if (!dragging) return;
+      dragging = false;
+      mainCanvas.classList.remove('dragging');
+    }
+
+    mainCanvas.addEventListener('mousedown',  onStart);
+    window.addEventListener     ('mousemove', onMove);
+    window.addEventListener     ('mouseup',   onEnd);
+    mainCanvas.addEventListener('touchstart', onStart, { passive: false });
+    window.addEventListener     ('touchmove',  onMove,  { passive: false });
+    window.addEventListener     ('touchend',   onEnd);
+  })();
 
   /* -------------------------------------------------------
      SLIDER — opacidade (modos sólidos)
@@ -281,6 +384,7 @@
     img.onerror = () => { URL.revokeObjectURL(url); showToast('Erro ao carregar a imagem.'); };
     img.onload  = async () => {
       state.img = img;
+      state.imgOffset = { x: 0, y: 0 };
       URL.revokeObjectURL(url);
       const raw    = await window.FrametaExif.parse(file);
       const result = window.FrametaExif.extract(raw);
@@ -414,8 +518,9 @@
     const item = state.batch[index];
 
     // Atualiza estado global com dados desta foto
-    state.img    = item.img;
-    state.fields = item.fields;
+    state.img       = item.img;
+    state.fields    = item.fields;
+    state.imgOffset = { x: 0, y: 0 };
 
     // Atualiza campo de nome do arquivo
     const fi = $('filenameInput');
@@ -536,9 +641,11 @@
       fontScale:   state.fontScale,
       barOpacity:  state.barOpacity,
       signature:   state.signature,
+      imgOffset:   state.imgOffset,
       order:       state.order,
       visible:     state.visible,
     });
+    updateRepositionHint();
   }
 
   /* -------------------------------------------------------
@@ -661,6 +768,15 @@
     toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove('show'), duration);
+  }
+
+  if (mainCanvas) {
+    mainCanvas.addEventListener('dblclick', () => {
+      if (state.fmt !== 'original') {
+        state.imgOffset = { x: 0, y: 0 };
+        render();
+      }
+    });
   }
 
 })();

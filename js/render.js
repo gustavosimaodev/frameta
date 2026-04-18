@@ -15,11 +15,11 @@ window.FrametaRender = (() => {
   };
 
   const FMT_RATIOS = {
-    '1:1':    [1, 1],
-    '4:5':    [4, 5],
-    '9:16':   [9, 16],
-    '16:9':   [16, 9],
-    '1.91:1': [1.91, 1],
+    '1:1':  [1, 1],
+    '4:5':  [4, 5],
+    '3:4':  [3, 4],
+    '9:16': [9, 16],
+    '16:9': [16, 9],
   };
 
   // Tamanho da overlay — multiplicador base
@@ -61,6 +61,7 @@ window.FrametaRender = (() => {
       fontScale   = 1.0,
       barOpacity  = 1.0,
       signature   = '',
+      imgOffset   = { x: 0, y: 0 },
       visible     = {},
       order       = ['camera','lens','shutter','aperture','iso','focal','date'],
     } = opts;
@@ -96,9 +97,14 @@ window.FrametaRender = (() => {
     canvas.width  = cropW;
     canvas.height = cropH;
 
-    /* ── Desenha a foto ───────────────────────────────── */
-    const ox = Math.floor((sw - cropW) / 2);
-    const oy = Math.floor((sh - cropH) / 2);
+    /* ── Desenha a foto com offset interativo ─────────── */
+    // offset é percentual da diferença entre imagem fonte e crop
+    const maxShiftX = Math.max(0, sw - cropW);
+    const maxShiftY = Math.max(0, sh - cropH);
+    const shiftX    = Math.max(-maxShiftX/2, Math.min(maxShiftX/2, (imgOffset.x || 0) * maxShiftX / 2));
+    const shiftY    = Math.max(-maxShiftY/2, Math.min(maxShiftY/2, (imgOffset.y || 0) * maxShiftY / 2));
+    const ox = Math.floor((sw - cropW) / 2 - shiftX);
+    const oy = Math.floor((sh - cropH) / 2 - shiftY);
     ctx.drawImage(img, ox, oy, cropW, cropH, 0, 0, cropW, cropH);
 
     /* ════════════════════════════════════════════════════
@@ -169,11 +175,10 @@ window.FrametaRender = (() => {
                        + pillGap * (measured.length - 1)
                        + Math.round(pillGap * 0.6); // gap extra antes da marca
 
-      /* Posição X do bloco */
+      // Posição X — apenas cantos (sem centro) no overlay
       let blockX;
-      if (isLeft)        blockX = margin;
-      else if (isRight)  blockX = cropW - margin - blockW;
-      else               blockX = Math.round((cropW - blockW) / 2);
+      if (isRight) blockX = cropW - margin - blockW;
+      else         blockX = margin; // default esquerda
 
       /* Posição Y do bloco */
       let blockY;
@@ -204,14 +209,22 @@ window.FrametaRender = (() => {
         ctx.font      = `${item.fw} ${item.fs}px ${fontFam}`;
         ctx.fillStyle = isDiscrete ? 'rgba(255,255,255,0.55)' : '#ffffff';
 
+        // Alinhamento automático: direita se canto direito, esquerda caso contrário
+        const textX = isRight
+          ? blockX + item.pw - item.px
+          : blockX + item.px;
+        ctx.textAlign = isRight ? 'right' : 'left';
+
         if (isDiscrete) {
-          ctx.fillText(item.value, blockX + item.px, textY);
+          ctx.fillText(item.value, textX, textY);
         } else {
-          outlineText(ctx, item.value, blockX + item.px, textY, strokeW);
+          outlineText(ctx, item.value, textX, textY, strokeW);
         }
 
         currentY += item.ph + pillGap;
       });
+
+      ctx.textAlign = 'left'; // reset
 
       return; // encerra o modo overlay
     }

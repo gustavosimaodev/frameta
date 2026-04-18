@@ -111,19 +111,22 @@
         </div>
       </section>
 
-      <!-- POSIÇÃO -->
-      <section class="sidebar-section">
+      <!-- POSIÇÃO — muda conforme o estilo selecionado -->
+      <section class="sidebar-section" id="posSection">
         <div class="section-title">Posição</div>
-        <div class="pos-grid" id="posGroup">
-          <button class="pos-btn" data-value="tl">↖</button>
-          <button class="pos-btn" data-value="tc">↑</button>
-          <button class="pos-btn" data-value="tr">↗</button>
-          <button class="pos-btn" data-value="ml">←</button>
-          <button class="pos-btn" data-value="mc">·</button>
-          <button class="pos-btn" data-value="mr">→</button>
-          <button class="pos-btn active" data-value="bl">↙</button>
-          <button class="pos-btn" data-value="bc">↓</button>
-          <button class="pos-btn" data-value="br">↘</button>
+
+        <!-- Posições do Overlay — apenas 4 cantos -->
+        <div class="pos-grid pos-grid--corners" id="posGroupOverlay">
+          <button class="pos-btn" data-value="tl" title="Superior esquerdo">↖</button>
+          <button class="pos-btn" data-value="tr" title="Superior direito">↗</button>
+          <button class="pos-btn active" data-value="bl" title="Inferior esquerdo">↙</button>
+          <button class="pos-btn" data-value="br" title="Inferior direito">↘</button>
+        </div>
+
+        <!-- Posições do modo Sólido — apenas topo/base -->
+        <div class="pos-grid pos-grid--bars" id="posGroupSolid" style="display:none">
+          <button class="pos-btn" data-value="tc" title="Topo">↑</button>
+          <button class="pos-btn active" data-value="bc" title="Base">↓</button>
         </div>
       </section>
 
@@ -134,9 +137,9 @@
           <button class="fmt-btn active" data-value="original">Original</button>
           <button class="fmt-btn" data-value="1:1">1:1 <small>Feed</small></button>
           <button class="fmt-btn" data-value="4:5">4:5 <small>Portrait</small></button>
+          <button class="fmt-btn" data-value="3:4">3:4 <small>Portrait</small></button>
           <button class="fmt-btn" data-value="9:16">9:16 <small>Story</small></button>
           <button class="fmt-btn" data-value="16:9">16:9 <small>Wide</small></button>
-          <button class="fmt-btn" data-value="1.91:1">1.91:1 <small>Twitter</small></button>
         </div>
       </section>
 
@@ -187,6 +190,21 @@
             <span>Solte a foto aqui</span>
           </div>
         </div>
+
+        <!-- Indicador de arrastar imagem (aparece quando formato != original) -->
+        <div class="reposition-hint" id="repositionHint" style="display:none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="5 9 2 12 5 15"/>
+            <polyline points="9 5 12 2 15 5"/>
+            <polyline points="15 19 12 22 9 19"/>
+            <polyline points="19 9 22 12 19 15"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <line x1="12" y1="2" x2="12" y2="22"/>
+          </svg>
+          <span>Arraste para reposicionar</span>
+          <button class="reposition-reset" id="repositionReset" title="Centralizar">↺</button>
+        </div>
+
         <div class="empty-state" id="emptyState">
           <div class="empty-icon">
             <svg width="48" height="48" viewBox="0 0 28 28" fill="none">
