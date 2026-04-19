@@ -6,14 +6,6 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 
 ## [Unreleased]
 
-### v0.9.0 — Canvas interativo com crop e posicionamento
-> EXIF independente por foto no batch mode (pendente de revisão com modelo mais robusto).
-> Canvas com reposicionamento da imagem ao mudar formato de saída.
-- [ ] Drag interativo da imagem dentro do canvas ao mudar proporção
-- [ ] Estado de offset individual por foto no batch
-- [ ] Botão "centralizar" para resetar o crop
-- [ ] Zoom in/out com scroll ou pinch
-
 ### v1.0.0 — Compartilhamento direto nas redes sociais
 - [ ] Web Share API para WhatsApp, Instagram, Facebook e outras
 - [ ] Deep link para Instagram Stories
@@ -21,10 +13,10 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 
 ### Web (geral)
 - [ ] Upload de logo própria no overlay
-- [ ] Color picker para cor de fundo e texto dos pills
-- [ ] Salvar preferências no localStorage
+- [ ] Color picker para cores dos pills
+- [ ] Salvar preferências no localStorage (estilo, posição, fonte, ordem)
 - [ ] Export em PNG além de JPEG
-- [ ] PWA — instalável como app
+- [ ] PWA — instalável como app no desktop e mobile
 
 ### Mobile
 - [ ] Flutter app scaffold (Android + iOS)
@@ -39,74 +31,89 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 - [ ] Domínio próprio (frameta.com / frameta.app)
 - [ ] Analytics privacy-first (Plausible)
 
+### Bugs conhecidos (revisão futura)
+- [ ] EXIF independente por foto no batch mode
+- [ ] Downloads individuais múltiplos bloqueados no macOS/Safari (workaround: ZIP)
+
 ---
 
-## [0.9.0] — 2026-04-17
+## [0.9.3] — 2026-04-19
 
-Limpeza e estabilização do código. Download em lote restaurado para ZIP.
+Alinhamento correto dos pills, sidebar compacto, bottom sheet mobile funcional.
 
 ### Fixed
-- `signature` adicionado na desestruturação de `opts` no `render.js` — campo não estava sendo passado para o canvas
-- `signature` adicionado como pill no array `items` do overlay, antes da marca obrigatória
-- Bloco de código morto removido do `render.js` (linhas após `return` do modo overlay que nunca eram executadas)
-- Variável `isCenter` removida do `render.js` (declarada mas nunca usada)
-- `isSignature` e `isBrand` unificados em `isDiscrete` no bloco de medição e desenho dos pills
+- Pills do overlay agora se alinham pelo canto escolhido: cada pill mantém sua largura natural (ajustada ao conteúdo), mas a âncora do bloco é o canto escolhido — pills do lado direito ancoram pela borda direita (`pillX = blockX + blockW - item.pw`), pills do lado esquerdo ancoram pela borda esquerda
+- Overflow de 53px no sidebar eliminado: grid de formatos passou para 3 colunas com fonte e padding reduzidos
+- Bottom sheet mobile reescrito: border-radius 16px, handle pill via `::before`, `position: fixed`, `z-index: 100`, transição `cubic-bezier` suave, max-height 60vh com scroll interno
 
 ### Changed
-- Download em lote restaurado para ZIP via JSZip — mais confiável que downloads sequenciais no macOS/Safari
-- `app.js` reescrito com código limpo: remoção de tentativas de correção acumuladas, lógica de batch simplificada e comentada
-- Debug block exibido apenas quando `result._log` tem conteúdo (não em fotos do batch)
-- `updateStyleUI` renomeado de `updateOverlaySizeVisibility` para nome mais descritivo
-- Blob URLs do batch agora usados diretamente nas miniaturas do filmstrip (em vez de `img.src` que ficava inválido após revogar)
-
-### Known Issues
-- EXIF independente por foto no batch: painel atualiza corretamente mas renderização usa configurações globais (comportamento intencional nesta versão — revisão planejada para v0.9.0)
-- Download em lote no macOS/Safari: ZIP funciona corretamente; downloads individuais sequenciais bloqueados pelo browser (limitação de plataforma)
+- Aba Sobre: card de Roadmap removido para evitar desatualização constante
 
 ---
 
-## [0.8.4] — 2026-04-16
+## [0.9.2] — 2026-04-19
 
-EXIF isolado por foto via deep copy.
-
-### Fixed
-- Deep copy via `JSON.parse(JSON.stringify(...))` evita que o ArrayBuffer do EXIF seja liberado pelo GC entre fotos do batch
-- Blob URLs permanentes por foto para evitar invalidação prematura
-- `hideBatchUI` revoga todos os blob URLs ao limpar o estado
-
----
-
-## [0.8.3] — 2026-04-16
-
-Reset do painel EXIF entre fotos.
-
-### Fixed
-- Painel EXIF resetado completamente antes de cada atualização
-- Debug block escondido por padrão, exibido apenas com dados disponíveis
-
----
-
-## [0.8.2] — 2026-04-16
-
-Layout restaurado após quebra do filmstrip.
-
-### Fixed
-- Filmstrip com `position: absolute` quebrava o layout — movido para `div.app-column` em flow normal
-- `activateBatchItem` reescrita corretamente
-
----
-
-## [0.8.1] — 2026-04-16
-
-Refinamentos do batch e overlay.
-
-### Fixed
-- Filmstrip posicionado abaixo do canvas, fora da área de edição
-- Tamanho de fonte unificado no overlay
-- `ctx.textAlign` resetado após modo overlay
+Data como primeiro campo, habilitada por padrão.
 
 ### Changed
-- Download em lote passa a gerar arquivos individuais (revertido no v0.9.0)
+- Campo "Data" movido para primeira posição em `state.order` e no `orderList` do HTML
+- `visible.date` alterado de `false` para `true` — Data aparece no overlay por padrão
+
+### Confirmed
+- `fields.date` usa `DateTimeOriginal` (tag `0x9003`) com fallback para `DateTime` — é a data de captura, não de modificação
+
+---
+
+## [0.9.1] — 2026-04-19
+
+Correção do drop overlay, sidebar compacto, zoom slider no canvas interativo.
+
+### Fixed
+- Drop overlay não bloqueia mais a interface por padrão (`pointer-events: none` sem `.active`)
+- Sidebar com espaçamentos reduzidos em todos os componentes
+
+### Added
+- Slider de zoom no hint de reposicionamento do canvas (100%–300%)
+- Zoom integrado ao `render.js` via `imgZoom` — reduz a região fonte da imagem proporcionalmente
+- Botão ↺ reseta offset e zoom simultaneamente
+
+---
+
+## [0.9.0] — 2026-04-19
+
+Canvas interativo, posições contextuais, 3:4 Portrait, mobile bottom sheet.
+
+### Added
+- Canvas interativo: arraste a imagem dentro do crop ao mudar o formato de saída
+- Duplo-clique no canvas centraliza a imagem
+- Hint flutuante "Arraste · use o zoom abaixo" aparece ao mudar para formato ≠ Original
+- Posições contextuais: Overlay mostra 4 cantos (↖ ↗ ↙ ↘), modos sólidos mostram topo/base (↑ ↓)
+- Ao trocar de estilo, `state.pos` é sincronizado para valor válido automaticamente
+- Formato 3:4 Portrait adicionado ao lado de 4:5 Portrait
+- Mobile: sidebar vira bottom sheet com handle e pill indicator
+
+### Changed
+- Formato 1.91:1 Twitter removido e substituído por 3:4 Portrait
+- `FMT_RATIOS` atualizado com `'3:4': [3, 4]`
+- `imgOffset` resetado ao trocar de formato ou carregar nova foto
+- Aba Sobre: grid de 3 cards reduzido para 2 (Roadmap removido)
+
+---
+
+## [0.9.0 patch] — 2026-04-18
+
+Limpeza de código e ZIP restaurado.
+
+### Fixed
+- `signature` adicionado na desestruturação de `opts` no `render.js`
+- Bloco de código morto removido após `return` do modo overlay
+- Variável `isCenter` não usada removida
+- `isSignature` e `isBrand` unificados em `isDiscrete`
+
+### Changed
+- Download em lote restaurado para ZIP via JSZip — mais confiável no macOS/Safari
+- `app.js` reescrito limpo: remoção de tentativas acumuladas, batch simplificado
+- Debug block exibido apenas quando `result._log` tem conteúdo real
 
 ---
 
@@ -115,12 +122,11 @@ Refinamentos do batch e overlay.
 Batch mode completo.
 
 ### Added
-- Upload múltiplo — seleção ou drag de N imagens
-- Filmstrip com miniaturas numeradas
-- Botões de navegação anterior/próxima
-- Contador de fotos (ex: "2 / 5")
-- Botão "Baixar todas" com exportação em ZIP
-- Arquivo único mantém comportamento original
+- Upload múltiplo com filmstrip de miniaturas
+- Navegação entre fotos com botões ‹ ›
+- Contador de fotos no filmstrip
+- Download em lote via ZIP (JSZip)
+- Cada foto mantém EXIF e nome de arquivo independente
 
 ---
 
@@ -132,7 +138,6 @@ Responsividade mobile.
 - Layout adaptado para telas ≤768px
 - Sidebar colapsável com botão "Configurações"
 - Canvas adaptado para largura mobile
-- Touch-friendly
 
 ---
 
@@ -141,7 +146,7 @@ Responsividade mobile.
 Nome do arquivo ao salvar.
 
 ### Added
-- Campo de texto para nome do arquivo exportado
+- Campo para definir nome do arquivo exportado
 - Sanitização automática do nome
 - Fallback para `frameta_[timestamp].jpg`
 
@@ -152,94 +157,41 @@ Nome do arquivo ao salvar.
 Campo de assinatura.
 
 ### Added
-- Campo "Assinatura" no sidebar (nome, perfil, copyright)
-- Aparece como pill discreto antes da marca obrigatória
-- No modo sólido, aparece centralizado na barra
-- Limite de 60 caracteres
+- Campo "Assinatura" no sidebar (nome, perfil, copyright — máx 60 chars)
+- Aparece como pill discreto antes da marca obrigatória no overlay
 
 ---
 
 ## [0.6.1] — 2026-04-16
 
-Correção de proporção nos modos sólidos.
+Barra sólida como sobreposição.
 
 ### Fixed
-- Estilos Branco e Escuro não expandem mais o canvas
-- Barra sempre sobreposta sobre a imagem
+- Estilos Branco e Escuro não expandem mais o canvas — barra sempre sobreposta
 - `barY` do modo bottom corrigido
 
 ### Added
-- Slider de opacidade da barra (10%–100%) nos modos Branco e Escuro
+- Slider de opacidade da barra (10%–100%)
 
 ---
 
 ## [0.6.0] — 2026-04-11
 
-Tab Feedback e reorganização do sidebar.
+Tab Feedback e reorganização.
 
 ### Added
-- Tab **Feedback** com formulário Formspree
+- Tab Feedback com formulário Formspree
 - Pill obrigatório "frameta.vercel.app" no overlay
 
 ### Changed
 - "Campos e ordem" movido para o painel direito
 - Botões P/M/G substituídos pelo slider de fonte
-- "Sugestões" migrado para tab Feedback
 
 ---
 
-## [0.5.0] — 2026-04-11
+## [0.1.0–0.5.0] — 2026-04-09 a 2026-04-11
 
-UX consolidada.
-
-### Added
-- Botão "Baixar foto" abaixo do "Abrir foto"
-- Campos e ordem unificados com drag-and-drop e toggle por linha
-- Slider de tamanho de fonte (60%–160%)
-- Pill obrigatório "frameta.vercel.app"
-- Página "Sobre" com Fale Conosco (Instagram, Facebook, LinkedIn)
-
----
-
-## [0.4.0] — 2026-04-10
-
-Overlay e tema escuro.
-
-### Added
-- Estilo **Overlay** — texto com stroke, sem fundo sólido
-- Tema claro / escuro / sistema
-- Link de crédito no header
-
----
-
-## [0.3.0] — 2026-04-10
-
-Parser EXIF v4.
-
-### Fixed
-- IFD chain completa (IFD0 → IFD1 → ExifIFD)
-- Big-endian (MM byte order)
-- Identificação correta de fotos sem EXIF de câmera
-
----
-
-## [0.2.0] — 2026-04-10
-
-Arquitetura modular e parser nativo.
-
-### Added
-- Parser EXIF binário nativo sem CDN
-- Design system com DM Sans + DM Mono
-- Módulos separados: exif.js, render.js, app.js
-
----
-
-## [0.1.0] — 2026-04-09
-
-Versão inicial.
-
-### Added
-- Upload, EXIF via exifr (CDN), preview, export JPEG
+Versões iniciais: parser EXIF nativo, design system, overlay, temas, drag-and-drop de campos.
 
 ---
 

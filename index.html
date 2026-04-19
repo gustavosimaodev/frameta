@@ -40,16 +40,12 @@
   <!-- EDITOR -->
   <div class="app" id="tabEditor">
 
-    <aside class="sidebar" id="sidebar">
-      <button class="sidebar-toggle" id="sidebarToggle">
-        <span>Configurações</span>
-        <span class="sidebar-toggle-icon">▾</span>
-      </button>
+    <aside class="sidebar">
 
       <!-- UPLOAD -->
-      <section class="sidebar-section sidebar-section--always">
+      <section class="sidebar-section">
         <label class="upload-zone" id="uploadZone">
-          <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/tiff,image/webp,image/heic" hidden multiple />
+          <input type="file" id="fileInput" accept="image/jpeg,image/jpg,image/png,image/tiff,image/webp,image/heic" hidden />
           <div class="upload-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -61,28 +57,13 @@
           <span class="upload-sub">JPEG · PNG · TIFF · WebP</span>
         </label>
         <!-- DOWNLOAD logo abaixo do upload -->
-        <input
-          type="text"
-          id="filenameInput"
-          class="filename-input"
-          placeholder="nome do arquivo"
-          maxlength="80"
-        />
         <button class="export-btn" id="exportBtn" disabled>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
             <polyline points="7 10 12 15 17 10"/>
             <line x1="12" y1="15" x2="12" y2="3"/>
           </svg>
-          <span id="exportBtnLabel">Baixar foto</span>
-        </button>
-        <button class="export-btn export-btn--batch" id="exportAllBtn" style="display:none">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-            <polyline points="7 10 12 15 17 10"/>
-            <line x1="12" y1="15" x2="12" y2="3"/>
-          </svg>
-          Baixar todas (<span id="batchCount">0</span>)
+          Baixar foto
         </button>
       </section>
 
@@ -94,6 +75,7 @@
           <button class="opt-btn" data-value="white">Branco</button>
           <button class="opt-btn" data-value="dark">Escuro</button>
         </div>
+        <!-- Opacidade — visível apenas nos modos Branco e Escuro -->
         <div class="font-size-row" id="opacityRow" style="display:none;margin-top:8px">
           <span class="font-size-label">Opacidade</span>
           <input type="range" id="opacitySlider" min="10" max="100" value="100" step="5" />
@@ -111,22 +93,19 @@
         </div>
       </section>
 
-      <!-- POSIÇÃO — muda conforme o estilo selecionado -->
-      <section class="sidebar-section" id="posSection">
+      <!-- POSIÇÃO -->
+      <section class="sidebar-section">
         <div class="section-title">Posição</div>
-
-        <!-- Posições do Overlay — apenas 4 cantos -->
-        <div class="pos-grid pos-grid--corners" id="posGroupOverlay">
-          <button class="pos-btn" data-value="tl" title="Superior esquerdo">↖</button>
-          <button class="pos-btn" data-value="tr" title="Superior direito">↗</button>
-          <button class="pos-btn active" data-value="bl" title="Inferior esquerdo">↙</button>
-          <button class="pos-btn" data-value="br" title="Inferior direito">↘</button>
-        </div>
-
-        <!-- Posições do modo Sólido — apenas topo/base -->
-        <div class="pos-grid pos-grid--bars" id="posGroupSolid" style="display:none">
-          <button class="pos-btn" data-value="tc" title="Topo">↑</button>
-          <button class="pos-btn active" data-value="bc" title="Base">↓</button>
+        <div class="pos-grid" id="posGroup">
+          <button class="pos-btn" data-value="tl">↖</button>
+          <button class="pos-btn" data-value="tc">↑</button>
+          <button class="pos-btn" data-value="tr">↗</button>
+          <button class="pos-btn" data-value="ml">←</button>
+          <button class="pos-btn" data-value="mc">·</button>
+          <button class="pos-btn" data-value="mr">→</button>
+          <button class="pos-btn active" data-value="bl">↙</button>
+          <button class="pos-btn" data-value="bc">↓</button>
+          <button class="pos-btn" data-value="br">↘</button>
         </div>
       </section>
 
@@ -137,9 +116,9 @@
           <button class="fmt-btn active" data-value="original">Original</button>
           <button class="fmt-btn" data-value="1:1">1:1 <small>Feed</small></button>
           <button class="fmt-btn" data-value="4:5">4:5 <small>Portrait</small></button>
-          <button class="fmt-btn" data-value="3:4">3:4 <small>Portrait</small></button>
           <button class="fmt-btn" data-value="9:16">9:16 <small>Story</small></button>
           <button class="fmt-btn" data-value="16:9">16:9 <small>Wide</small></button>
+          <button class="fmt-btn" data-value="1.91:1">1.91:1 <small>Twitter</small></button>
         </div>
       </section>
 
@@ -151,19 +130,6 @@
           <button class="opt-btn" data-value="mono" style="font-family:'DM Mono',monospace">Mono</button>
           <button class="opt-btn" data-value="serif" style="font-family:Georgia,serif">Serif</button>
         </div>
-      </section>
-
-      <!-- ASSINATURA -->
-      <section class="sidebar-section">
-        <div class="section-title">Assinatura</div>
-        <input
-          type="text"
-          id="signatureInput"
-          class="signature-input"
-          placeholder="@seu_perfil · seu nome · © 2026"
-          maxlength="60"
-        />
-        <div class="signature-hint">Aparece ao final do overlay</div>
       </section>
 
       <!-- TEMA -->
@@ -178,66 +144,34 @@
 
     </aside>
 
-    <div class="app-column">
-      <!-- WORKSPACE -->
-      <main class="workspace" id="workspace">
-        <div class="drop-overlay" id="dropOverlay">
-          <div class="drop-overlay-inner">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
-              <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-            </svg>
-            <span>Solte a foto aqui</span>
-          </div>
+    <!-- WORKSPACE -->
+    <main class="workspace" id="workspace">
+      <div class="drop-overlay" id="dropOverlay">
+        <div class="drop-overlay-inner">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          </svg>
+          <span>Solte a foto aqui</span>
         </div>
-
-        <!-- Controles do canvas interativo -->
-        <div class="reposition-hint" id="repositionHint" style="display:none">
-          <div class="reposition-top">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="5 9 2 12 5 15"/>
-              <polyline points="9 5 12 2 15 5"/>
-              <polyline points="15 19 12 22 9 19"/>
-              <polyline points="19 9 22 12 19 15"/>
-              <line x1="2" y1="12" x2="22" y2="12"/>
-              <line x1="12" y1="2" x2="12" y2="22"/>
-            </svg>
-            <span>Arraste · use o zoom abaixo</span>
-            <button class="reposition-reset" id="repositionReset" title="Centralizar e resetar zoom">↺</button>
-          </div>
-          <div class="reposition-zoom">
-            <span class="zoom-label">−</span>
-            <input type="range" id="zoomSlider" min="100" max="300" value="100" step="5" />
-            <span class="zoom-label">+</span>
-            <span class="zoom-val" id="zoomVal">100%</span>
-          </div>
-        </div>
-
-        <div class="empty-state" id="emptyState">
-          <div class="empty-icon">
-            <svg width="48" height="48" viewBox="0 0 28 28" fill="none">
-              <rect x="2" y="6" width="24" height="17" rx="3" stroke="currentColor" stroke-width="1"/>
-              <circle cx="14" cy="14.5" r="4.5" stroke="currentColor" stroke-width="1"/>
-              <circle cx="14" cy="14.5" r="2" fill="currentColor" opacity="0.4"/>
-              <rect x="9" y="3" width="10" height="4" rx="1.5" stroke="currentColor" stroke-width="1"/>
-            </svg>
-          </div>
-          <h2 class="empty-title">Arraste uma foto aqui</h2>
-          <p class="empty-sub">ou use o botão <em>Abrir foto</em> na barra lateral</p>
-          <p class="empty-formats">JPEG · PNG · TIFF · WebP</p>
-        </div>
-        <div class="preview-container" id="previewContainer" style="display:none">
-          <canvas id="mainCanvas"></canvas>
-        </div>
-      </main>
-
-      <div class="filmstrip" id="filmstrip" style="display:none">
-        <button class="filmstrip-nav" id="filmPrev">‹</button>
-        <div class="filmstrip-track" id="filmstripTrack"></div>
-        <div class="batch-counter" id="batchCounter"></div>
-        <button class="filmstrip-nav" id="filmNext">›</button>
       </div>
-    </div>
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="6" width="24" height="17" rx="3" stroke="currentColor" stroke-width="1"/>
+            <circle cx="14" cy="14.5" r="4.5" stroke="currentColor" stroke-width="1"/>
+            <circle cx="14" cy="14.5" r="2" fill="currentColor" opacity="0.4"/>
+            <rect x="9" y="3" width="10" height="4" rx="1.5" stroke="currentColor" stroke-width="1"/>
+          </svg>
+        </div>
+        <h2 class="empty-title">Arraste uma foto aqui</h2>
+        <p class="empty-sub">ou use o botão <em>Abrir foto</em> na barra lateral</p>
+        <p class="empty-formats">JPEG · PNG · TIFF · WebP</p>
+      </div>
+      <div class="preview-container" id="previewContainer" style="display:none">
+        <canvas id="mainCanvas"></canvas>
+      </div>
+    </main>
 
     <!-- PAINEL EXIF -->
     <aside class="exif-panel" id="exifPanel">
@@ -259,14 +193,6 @@
           <span class="collapse-icon">▾</span>
         </button>
         <ul class="order-list" id="orderList">
-          <li class="order-item" data-key="date">
-            <span class="drag-handle">⠿</span>
-            <span class="order-label">Data</span>
-            <label class="toggle-wrap" style="margin-left:auto">
-              <input type="checkbox" data-field="date" checked class="field-toggle" />
-              <span class="toggle-slider"></span>
-            </label>
-          </li>
           <li class="order-item" data-key="camera">
             <span class="drag-handle">⠿</span>
             <span class="order-label">Câmera</span>
@@ -315,6 +241,14 @@
               <span class="toggle-slider"></span>
             </label>
           </li>
+          <li class="order-item" data-key="date">
+            <span class="drag-handle">⠿</span>
+            <span class="order-label">Data</span>
+            <label class="toggle-wrap" style="margin-left:auto">
+              <input type="checkbox" data-field="date" class="field-toggle" />
+              <span class="toggle-slider"></span>
+            </label>
+          </li>
         </ul>
       </div>
     </aside>
@@ -335,10 +269,6 @@
         <div class="about-card">
           <div class="about-card-title">Privacidade</div>
           <p>Nenhum arquivo é enviado a servidores. Todo o processamento acontece localmente no seu navegador. Dados de localização GPS nunca são exibidos.</p>
-        </div>
-        <div class="about-card">
-          <div class="about-card-title">Roadmap</div>
-          <p>v0.5 — Canvas interativo com crop<br>v0.6 — Refinamentos de UX<br>v0.7 — Batch mode<br>v1.0 — App mobile + Plugin Lightroom</p>
         </div>
       </div>
 
