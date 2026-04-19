@@ -201,36 +201,50 @@ window.FrametaRender = (() => {
       /* Desenha cada pill */
       let currentY = blockY;
       measured.forEach((item, idx) => {
-        const isBrand    = !!item.isBrand;
         const isDiscrete = !!item.isDiscrete;
 
-        // Gap extra antes de itens discretos (assinatura e marca)
+        // Gap extra antes de itens discretos
         if (isDiscrete && idx > 0) currentY += Math.round(pillGap * 0.6);
 
+        // Todos os pills têm a mesma largura (blockW) para alinhar pelo lado
+        const pillX = blockX; // sempre começa no mesmo X
+        const pillW = blockW; // largura uniforme = largura do maior pill
+
+        // Fundo do pill
         const bgAlpha = isDiscrete ? 0.28 : 0.42;
         ctx.fillStyle = `rgba(0,0,0,${bgAlpha})`;
-        pill(ctx, blockX, currentY, item.pw, item.ph, pillRad);
+        pill(ctx, pillX, currentY, pillW, item.ph, pillRad);
         ctx.fill();
 
-        ctx.strokeStyle = isDiscrete ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0.12)';
-        ctx.lineWidth   = 1;
-        pill(ctx, blockX, currentY, item.pw, item.ph, pillRad);
+        // Borda
+        ctx.strokeStyle = isDiscrete
+          ? 'rgba(255,255,255,0.07)'
+          : 'rgba(255,255,255,0.12)';
+        ctx.lineWidth = 1;
+        pill(ctx, pillX, currentY, pillW, item.ph, pillRad);
         ctx.stroke();
 
+        // Texto: alinhado pelo lado escolhido dentro do pill de largura uniforme
         const textY = currentY + item.ph / 2;
         ctx.font      = `${item.fw} ${item.fs}px ${fontFam}`;
         ctx.fillStyle = isDiscrete ? 'rgba(255,255,255,0.55)' : '#ffffff';
 
-        // Alinhamento automático: direita se canto direito, esquerda caso contrário
-        const textX = isRight
-          ? blockX + item.pw - item.px
-          : blockX + item.px;
-        ctx.textAlign = isRight ? 'right' : 'left';
-
-        if (isDiscrete) {
-          ctx.fillText(item.value, textX, textY);
+        if (isRight) {
+          ctx.textAlign = 'right';
+          const textX = pillX + pillW - item.px;
+          if (isDiscrete) {
+            ctx.fillText(item.value, textX, textY);
+          } else {
+            outlineText(ctx, item.value, textX, textY, strokeW);
+          }
         } else {
-          outlineText(ctx, item.value, textX, textY, strokeW);
+          ctx.textAlign = 'left';
+          const textX = pillX + item.px;
+          if (isDiscrete) {
+            ctx.fillText(item.value, textX, textY);
+          } else {
+            outlineText(ctx, item.value, textX, textY, strokeW);
+          }
         }
 
         currentY += item.ph + pillGap;

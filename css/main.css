@@ -262,27 +262,28 @@ html, body {
 /* Format Grid */
 .fmt-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
 }
 
 .fmt-btn {
-  padding: 4px 4px;
+  padding: 4px 2px;
   border: 1px solid var(--paper-3);
   border-radius: var(--radius-sm);
   background: var(--paper);
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 10px;
   color: var(--ink-3);
   cursor: pointer;
   transition: all var(--transition);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0px;
-  line-height: 1.15;
+  gap: 0;
+  line-height: 1.2;
+  white-space: nowrap;
 }
-.fmt-btn small { font-size: 8px; font-family: var(--font-mono); color: var(--ink-4); text-transform: uppercase; }
+.fmt-btn small { font-size: 8px; opacity: 0.7; }
 .fmt-btn:hover { border-color: var(--ink-3); color: var(--ink-2); }
 .fmt-btn.active { border-color: var(--ink); background: var(--ink); color: var(--white); }
 .fmt-btn.active small { color: rgba(255,255,255,0.5); }
@@ -675,114 +676,130 @@ input:checked + .toggle-slider::before { transform: translateX(12px); }
 
 /* --- RESPONSIVIDADE MOBILE — sem rolagem, tudo acessível ---- */
 @media (max-width: 768px) {
-  :root {
-    --header-h: 44px;
+  :root { --header-h: 44px; }
+
+  /* Impede scroll da página inteira */
+  html, body { overflow: hidden; height: 100%; }
+
+  .header {
+    padding: 0 12px;
+    gap: 10px;
   }
-
-  body { overflow: hidden; }
-
-  .header { padding: 0 12px; gap: 10px; }
   .header-credit { display: none; }
   .brand-tag { display: none; }
   .nav-btn { padding: 4px 10px; font-size: 12px; }
 
+  /* Layout: coluna central ocupa tudo */
   .app {
     flex-direction: column;
     height: calc(100vh - var(--header-h));
     overflow: hidden;
+    position: relative;
   }
 
-  /* Sidebar vira bottom sheet compacto */
-  .sidebar {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: auto;
-    width: 100%;
-    min-width: unset;
-    max-height: 55vh;
-    border-right: none;
-    border-top: 1px solid var(--paper-3);
-    border-bottom: none;
-    padding: 8px 12px 14px;
-    overflow-y: auto;
-    z-index: 50;
-    background: var(--white);
-    transform: translateY(calc(100% - 44px));
-    transition: transform 0.28s ease;
-  }
-
-  .sidebar:not(.collapsed) {
-    transform: translateY(0);
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
-  }
-
-  .sidebar-toggle {
-    display: flex;
-    position: sticky;
-    top: 0;
-    background: var(--white);
-    padding: 6px 4px 10px;
-    margin: 0 -12px 8px;
-    padding-left: 16px;
-    padding-right: 16px;
-    border-bottom: 1px solid var(--paper-3);
-    z-index: 2;
-  }
-
-  /* Área central ocupa o que sobra */
   .app-column {
     flex: 1;
+    display: flex;
+    flex-direction: column;
     min-height: 0;
-    padding-bottom: 44px; /* reserva espaço pro bottom sheet fechado */
+    overflow: hidden;
   }
 
   .workspace {
     flex: 1;
     min-height: 0;
+    overflow: hidden;
   }
 
   #mainCanvas {
-    max-width: calc(100vw - 20px);
-    max-height: calc(100vh - var(--header-h) - 44px - 90px);
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
   }
 
-  .filmstrip {
-    padding: 6px;
-  }
-
-  .filmstrip-thumb {
-    width: 44px;
-    height: 44px;
-  }
-
-  /* Painel EXIF some no mobile — metadados acessíveis pelo sidebar */
+  /* Painel EXIF some — não há espaço no mobile */
   .exif-panel { display: none; }
 
-  /* Reposition hint menor no mobile */
-  .reposition-hint {
-    top: 8px;
-    padding: 4px 10px;
-    font-size: 10px;
+  /* Filmstrip menor */
+  .filmstrip { padding: 4px 6px; }
+  .filmstrip-thumb { width: 40px; height: 40px; }
+
+  /* Bottom sheet: sidebar sobe da base */
+  .sidebar {
+    position: fixed !important;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    top: auto !important;
+    width: 100% !important;
+    min-width: unset !important;
+    max-height: 60vh;
+    border-right: none;
+    border-top: 2px solid var(--paper-3);
+    padding: 0 12px 16px;
+    overflow-y: auto;
+    z-index: 100;
+    background: var(--white);
+    /* Começa recolhido — só o handle visível */
+    transform: translateY(calc(100% - 48px));
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 32px rgba(0,0,0,0.22);
   }
 
-  /* Sidebar: grids compactos */
-  .sidebar-section {
-    padding-bottom: 10px;
-    margin-bottom: 10px;
+  /* Quando expandido */
+  .sidebar:not(.collapsed) {
+    transform: translateY(0);
   }
+
+  /* Handle / toggle sempre visível no topo do bottom sheet */
+  .sidebar-toggle {
+    display: flex !important;
+    position: sticky;
+    top: 0;
+    background: var(--white);
+    padding: 12px 0 10px;
+    margin: 0 -12px 8px;
+    padding-left: 16px;
+    padding-right: 16px;
+    border-bottom: 1px solid var(--paper-2);
+    z-index: 2;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-2);
+    cursor: pointer;
+    align-items: center;
+    justify-content: space-between;
+    border: none;
+    width: calc(100% + 24px);
+  }
+
+  /* Indicador visual de drag (pill) */
+  .sidebar-toggle::before {
+    content: '';
+    position: absolute;
+    top: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 36px;
+    height: 4px;
+    background: var(--paper-3);
+    border-radius: 2px;
+  }
+
+  /* Espaço na base para o handle do bottom sheet */
+  .app-column { padding-bottom: 48px; }
+
+  /* Grids compactos no mobile */
   .fmt-grid { grid-template-columns: repeat(3, 1fr); }
   .pos-grid--corners { max-width: 90px; }
-  .opt-btn, .fmt-btn, .pos-btn { padding: 6px 4px; font-size: 11px; }
-
-  /* About/Feedback */
-  .about-inner h1 { font-size: 28px; }
-  .about-grid { grid-template-columns: 1fr; gap: 10px; }
-  .about-card { padding: 14px; }
-  .contact-links { flex-direction: column; }
+  .sidebar-section {
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+  }
 }
 
+/* Sidebar toggle: escondido fora do mobile */
 .sidebar-toggle { display: none; }
 
 /* --- SCROLLBAR --------------------------------------------- */
