@@ -15,11 +15,11 @@ window.FrametaRender = (() => {
   };
 
   const FMT_RATIOS = {
-    '1:1':    [1, 1],
-    '4:5':    [4, 5],
-    '9:16':   [9, 16],
-    '16:9':   [16, 9],
-    '1.91:1': [1.91, 1],
+    '1:1':  [1, 1],
+    '4:5':  [4, 5],
+    '3:4':  [3, 4],
+    '9:16': [9, 16],
+    '16:9': [16, 9],
   };
 
   // Tamanho da overlay — multiplicador base
@@ -61,6 +61,8 @@ window.FrametaRender = (() => {
       fontScale   = 1.0,
       barOpacity  = 1.0,
       signature   = '',
+      imgOffset   = { x: 0, y: 0 },
+      imgZoom     = 1.0,
       visible     = {},
       order       = ['camera','lens','shutter','aperture','iso','focal','date'],
     } = opts;
@@ -96,10 +98,25 @@ window.FrametaRender = (() => {
     canvas.width  = cropW;
     canvas.height = cropH;
 
-    /* ── Desenha a foto ───────────────────────────────── */
-    const ox = Math.floor((sw - cropW) / 2);
-    const oy = Math.floor((sh - cropH) / 2);
-    ctx.drawImage(img, ox, oy, cropW, cropH, 0, 0, cropW, cropH);
+    /* ── Desenha a foto com offset e zoom interativos ──── */
+    const zoom = Math.max(1, imgZoom || 1);
+    const baseSrcW = Math.min(sw, sw / zoom);
+    const baseSrcH = Math.min(sh, sh / zoom);
+    const cropRatio = cropW / cropH;
+    const srcRatio  = baseSrcW / baseSrcH;
+    let finalW, finalH;
+    if (srcRatio > cropRatio) {
+      finalH = baseSrcH;
+      finalW = baseSrcH * cropRatio;
+    } else {
+      finalW = baseSrcW;
+      finalH = baseSrcW / cropRatio;
+    }
+    const maxSX = sw - finalW;
+    const maxSY = sh - finalH;
+    const ox = Math.floor(Math.max(0, Math.min(maxSX, maxSX / 2 - (imgOffset.x || 0) * maxSX / 2)));
+    const oy = Math.floor(Math.max(0, Math.min(maxSY, maxSY / 2 - (imgOffset.y || 0) * maxSY / 2)));
+    ctx.drawImage(img, ox, oy, finalW, finalH, 0, 0, cropW, cropH);
 
     /* ════════════════════════════════════════════════════
        MODO OVERLAY — coluna de pills
