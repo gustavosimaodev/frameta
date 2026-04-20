@@ -14,18 +14,16 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 ### Web (geral)
 - [ ] Upload de logo própria no overlay
 - [ ] Color picker para cores dos pills
-- [ ] Salvar preferências no localStorage (estilo, posição, fonte, ordem)
+- [ ] Salvar preferências no localStorage
 - [ ] Export em PNG além de JPEG
 - [ ] PWA — instalável como app no desktop e mobile
 
 ### Mobile
 - [ ] Flutter app scaffold (Android + iOS)
 - [ ] Leitura nativa EXIF via platform channels
-- [ ] Share sheet integration
 
 ### Lightroom Plugin
 - [ ] Scaffold Lua com Lightroom SDK
-- [ ] Leitura de metadados do catálogo na exportação
 
 ### Infra
 - [ ] Domínio próprio (frameta.com / frameta.app)
@@ -39,43 +37,44 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 
 ## [0.9.3] — 2026-04-19
 
-Alinhamento correto dos pills, sidebar compacto, bottom sheet mobile funcional.
+Estabilização completa da v0.9.0: canvas interativo restaurado, pills com alinhamento correto pelo canto, sidebar compacto, bottom sheet mobile funcional.
 
 ### Fixed
-- Pills do overlay agora se alinham pelo canto escolhido: cada pill mantém sua largura natural (ajustada ao conteúdo), mas a âncora do bloco é o canto escolhido — pills do lado direito ancoram pela borda direita (`pillX = blockX + blockW - item.pw`), pills do lado esquerdo ancoram pela borda esquerda
-- Overflow de 53px no sidebar eliminado: grid de formatos passou para 3 colunas com fonte e padding reduzidos
-- Bottom sheet mobile reescrito: border-radius 16px, handle pill via `::before`, `position: fixed`, `z-index: 100`, transição `cubic-bezier` suave, max-height 60vh com scroll interno
+- Canvas interativo restaurado — `imgOffset` e `imgZoom` perdidos em reescrita anterior foram reinseridos na desestruturação de `opts` e na lógica de `drawImage`
+- Pills do overlay agora se alinham pelo canto escolhido com largura natural: canto direito ancora pela borda direita (`pillX = blockX + blockW - item.pw`), canto esquerdo pela borda esquerda (`pillX = blockX`)
+- Overflow de 53px no sidebar eliminado: grid de formatos em 3 colunas com fonte e padding reduzidos
+- Bottom sheet mobile reescrito com `position: fixed`, `border-radius: 16px`, handle pill via `::before`, transição `cubic-bezier` suave e `max-height: 60vh` com scroll interno
+- `index.html` reconstruído do zero — versão antiga com `posGroup` de 9 botões e sem IDs do batch/canvas foi substituída pela versão correta
 
 ### Changed
-- Aba Sobre: card de Roadmap removido para evitar desatualização constante
+- Aba Sobre: card de Roadmap removido para evitar desatualização
 
 ---
 
 ## [0.9.2] — 2026-04-19
 
-Data como primeiro campo, habilitada por padrão.
+Data como primeiro campo habilitada por padrão.
 
 ### Changed
-- Campo "Data" movido para primeira posição em `state.order` e no `orderList` do HTML
-- `visible.date` alterado de `false` para `true` — Data aparece no overlay por padrão
+- Campo "Data" movido para primeira posição em `state.order` e no `orderList`
+- `visible.date` alterado de `false` para `true`
 
 ### Confirmed
-- `fields.date` usa `DateTimeOriginal` (tag `0x9003`) com fallback para `DateTime` — é a data de captura, não de modificação
+- `fields.date` usa `DateTimeOriginal` (tag `0x9003`) — data de captura, não de modificação
 
 ---
 
 ## [0.9.1] — 2026-04-19
 
-Correção do drop overlay, sidebar compacto, zoom slider no canvas interativo.
+Slider de zoom no canvas interativo, drop overlay corrigido.
 
 ### Fixed
-- Drop overlay não bloqueia mais a interface por padrão (`pointer-events: none` sem `.active`)
-- Sidebar com espaçamentos reduzidos em todos os componentes
+- Drop overlay não bloqueia a interface por padrão (`pointer-events: none` sem `.active`)
 
 ### Added
-- Slider de zoom no hint de reposicionamento do canvas (100%–300%)
-- Zoom integrado ao `render.js` via `imgZoom` — reduz a região fonte da imagem proporcionalmente
+- Slider de zoom (100%–300%) no hint de reposicionamento
 - Botão ↺ reseta offset e zoom simultaneamente
+- Duplo-clique no canvas centraliza a imagem
 
 ---
 
@@ -84,36 +83,30 @@ Correção do drop overlay, sidebar compacto, zoom slider no canvas interativo.
 Canvas interativo, posições contextuais, 3:4 Portrait, mobile bottom sheet.
 
 ### Added
-- Canvas interativo: arraste a imagem dentro do crop ao mudar o formato de saída
-- Duplo-clique no canvas centraliza a imagem
-- Hint flutuante "Arraste · use o zoom abaixo" aparece ao mudar para formato ≠ Original
-- Posições contextuais: Overlay mostra 4 cantos (↖ ↗ ↙ ↘), modos sólidos mostram topo/base (↑ ↓)
-- Ao trocar de estilo, `state.pos` é sincronizado para valor válido automaticamente
-- Formato 3:4 Portrait adicionado ao lado de 4:5 Portrait
-- Mobile: sidebar vira bottom sheet com handle e pill indicator
+- Canvas interativo: arraste a imagem dentro do crop ao mudar formato de saída
+- Posições contextuais: Overlay mostra 4 cantos (↖ ↗ ↙ ↘), sólidos mostram topo/base (↑ ↓)
+- Sincronização automática de `state.pos` ao trocar estilo
+- Formato 3:4 Portrait ao lado de 4:5 Portrait
+- Mobile: sidebar vira bottom sheet com handle
 
 ### Changed
-- Formato 1.91:1 Twitter removido e substituído por 3:4 Portrait
-- `FMT_RATIOS` atualizado com `'3:4': [3, 4]`
-- `imgOffset` resetado ao trocar de formato ou carregar nova foto
-- Aba Sobre: grid de 3 cards reduzido para 2 (Roadmap removido)
+- Formato 1.91:1 Twitter removido, substituído por 3:4 Portrait
+- `imgOffset` e `imgZoom` resetados ao trocar formato ou carregar nova foto
 
 ---
 
 ## [0.9.0 patch] — 2026-04-18
 
-Limpeza de código e ZIP restaurado.
+Limpeza de código, ZIP restaurado.
 
 ### Fixed
-- `signature` adicionado na desestruturação de `opts` no `render.js`
+- `signature` adicionado na desestruturação de `opts`
 - Bloco de código morto removido após `return` do modo overlay
-- Variável `isCenter` não usada removida
 - `isSignature` e `isBrand` unificados em `isDiscrete`
 
 ### Changed
-- Download em lote restaurado para ZIP via JSZip — mais confiável no macOS/Safari
-- `app.js` reescrito limpo: remoção de tentativas acumuladas, batch simplificado
-- Debug block exibido apenas quando `result._log` tem conteúdo real
+- Download em lote restaurado para ZIP via JSZip
+- `app.js` reescrito limpo
 
 ---
 
@@ -123,9 +116,8 @@ Batch mode completo.
 
 ### Added
 - Upload múltiplo com filmstrip de miniaturas
-- Navegação entre fotos com botões ‹ ›
-- Contador de fotos no filmstrip
-- Download em lote via ZIP (JSZip)
+- Navegação ‹ › entre fotos
+- Download em lote via ZIP
 - Cada foto mantém EXIF e nome de arquivo independente
 
 ---
@@ -137,7 +129,6 @@ Responsividade mobile.
 ### Added
 - Layout adaptado para telas ≤768px
 - Sidebar colapsável com botão "Configurações"
-- Canvas adaptado para largura mobile
 
 ---
 
@@ -146,9 +137,7 @@ Responsividade mobile.
 Nome do arquivo ao salvar.
 
 ### Added
-- Campo para definir nome do arquivo exportado
-- Sanitização automática do nome
-- Fallback para `frameta_[timestamp].jpg`
+- Campo para nome do arquivo exportado com sanitização automática
 
 ---
 
@@ -157,8 +146,7 @@ Nome do arquivo ao salvar.
 Campo de assinatura.
 
 ### Added
-- Campo "Assinatura" no sidebar (nome, perfil, copyright — máx 60 chars)
-- Aparece como pill discreto antes da marca obrigatória no overlay
+- Campo "Assinatura" no sidebar — aparece como pill discreto no overlay
 
 ---
 
@@ -167,8 +155,7 @@ Campo de assinatura.
 Barra sólida como sobreposição.
 
 ### Fixed
-- Estilos Branco e Escuro não expandem mais o canvas — barra sempre sobreposta
-- `barY` do modo bottom corrigido
+- Estilos Branco e Escuro não expandem mais o canvas
 
 ### Added
 - Slider de opacidade da barra (10%–100%)
@@ -177,15 +164,11 @@ Barra sólida como sobreposição.
 
 ## [0.6.0] — 2026-04-11
 
-Tab Feedback e reorganização.
+Tab Feedback, pill de marca, reorganização.
 
 ### Added
 - Tab Feedback com formulário Formspree
 - Pill obrigatório "frameta.vercel.app" no overlay
-
-### Changed
-- "Campos e ordem" movido para o painel direito
-- Botões P/M/G substituídos pelo slider de fonte
 
 ---
 

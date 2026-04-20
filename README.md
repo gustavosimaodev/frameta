@@ -12,7 +12,7 @@ Desenvolvido por **Gustavo de Morais Simão** · [frameta.vercel.app](https://fr
 
 ## O que faz
 
-O Frameta lê automaticamente os metadados EXIF gravados pela câmera (corpo, lente, velocidade, abertura, ISO, focal, data) e os renderiza como pills tipográficos diretamente sobre a imagem — sem expandir o canvas, sem alterar a proporção original.
+O Frameta lê automaticamente os metadados EXIF gravados pela câmera (câmera, lente, velocidade, abertura, ISO, focal, data de captura) e os renderiza como pills tipográficos diretamente sobre a imagem — sem expandir o canvas, sem alterar a proporção original.
 
 **Sem servidor. Sem conta. Sem upload para terceiros.** Tudo processa no browser.
 
@@ -21,18 +21,18 @@ O Frameta lê automaticamente os metadados EXIF gravados pela câmera (corpo, le
 ## Funcionalidades
 
 - Parser EXIF binário nativo — sem dependências externas, funciona offline
-- Lê: câmera, lente, velocidade, abertura, ISO, focal, data de captura
+- Lê: câmera, lente, velocidade, abertura, ISO, focal, data de captura (DateTimeOriginal)
 - **3 estilos:** Overlay (pills translúcidos), Branco, Escuro
 - Controle de opacidade da barra (estilos Branco e Escuro)
 - Controle de tamanho de fonte do overlay
-- **4 posições de overlay** (cantos) com alinhamento automático do bloco pelo canto
+- **4 posições de overlay** (cantos) — alinhamento automático do bloco pelo canto escolhido
 - **2 posições de barra sólida** (topo / base)
 - **6 formatos de exportação:** Original, 1:1, 4:5, 3:4, 9:16, 16:9
-- **Canvas interativo:** arraste a imagem dentro do crop ao mudar o formato; slider de zoom; duplo-clique para centralizar
+- **Canvas interativo:** arraste a imagem dentro do crop; slider de zoom (100–300%); duplo-clique para centralizar
 - Visibilidade e ordem dos campos personalizáveis (drag-and-drop)
-- Campo de assinatura livre (nome, perfil, copyright)
+- Campo de assinatura livre (nome, perfil de rede social, copyright)
 - Escolha do nome do arquivo ao salvar
-- **Batch mode:** carrega múltiplas fotos, navega pelo filmstrip, exporta em ZIP
+- **Batch mode:** múltiplas fotos com filmstrip, exportação em ZIP
 - 3 opções de fonte: DM Sans, DM Mono, Serif
 - Tema claro / escuro / sistema
 - Responsivo — desktop e mobile (bottom sheet)
@@ -49,7 +49,7 @@ frameta/
 │   └── main.css        # design system — variáveis, layout, mobile
 ├── js/
 │   ├── exif.js         # parser binário JPEG/TIFF sem dependências
-│   ├── render.js       # renderização canvas — overlay e barra sólida
+│   ├── render.js       # renderização canvas — overlay, barra sólida, zoom/offset
 │   └── app.js          # controller — estado, eventos, batch, canvas drag
 ├── README.md
 ├── CHANGELOG.md
@@ -58,9 +58,7 @@ frameta/
 
 ---
 
-## Como usar
-
-### Localmente
+## Como usar localmente
 
 ```bash
 git clone https://github.com/gustavosimaodev/frameta.git
@@ -70,18 +68,11 @@ open index.html   # macOS
 
 Sem build. Sem npm install.
 
-### Deploy no Vercel
-
-1. Push para o GitHub
-2. Importe em [vercel.com/new](https://vercel.com/new)
-3. Framework preset: **Other** (static)
-4. Deploy automático a cada push
-
 ---
 
 ## Formatos de exportação
 
-| Formato | Proporção | Uso |
+| Formato | Proporção | Uso principal |
 |---|---|---|
 | Original | — | Sem alteração |
 | 1:1 Feed | 1:1 | Instagram quadrado |
@@ -92,12 +83,21 @@ Sem build. Sem npm install.
 
 ---
 
-## Comportamento do alinhamento do overlay
+## Comportamento dos pills no overlay
 
 Cada pill se ajusta à largura do seu conteúdo. O bloco inteiro se ancora no canto escolhido:
 
-- **Cantos esquerdos (↖ ↙)** — pills ancorados à esquerda, crescem para a direita
-- **Cantos direitos (↗ ↘)** — pills ancorados à direita, crescem para a esquerda
+- **Cantos esquerdos (↖ ↙)** — pills crescem para a direita a partir da borda esquerda
+- **Cantos direitos (↗ ↘)** — pills crescem para a esquerda a partir da borda direita
+
+---
+
+## Deploy no Vercel
+
+1. Push para o GitHub
+2. Importe em [vercel.com/new](https://vercel.com/new)
+3. Framework preset: **Other** (static)
+4. Deploy automático a cada push
 
 ---
 
