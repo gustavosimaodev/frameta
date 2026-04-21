@@ -4,16 +4,48 @@ Resumo das atualizações em linguagem acessível.
 
 ---
 
-## Versão atual — 0.9.0 (17 de abril de 2026)
+## Versão atual — 0.9.4 (21 de abril de 2026)
 
-### 🧹 Código mais limpo e estável
-Fizemos uma revisão completa do código removendo tentativas de correção acumuladas que estavam causando conflitos. O resultado é um app mais previsível e fácil de manter.
+### 🎛️ Cada foto com suas próprias configurações (Batch mode)
+Ao abrir várias fotos de uma vez, cada uma agora guarda individualmente seu estilo (Overlay, Branco, Escuro), posição, formato de recorte, zoom, offset e quais campos exibir. Ao navegar no filmstrip, a interface toda sincroniza automaticamente com a foto selecionada. O botão "Baixar todas" exporta cada foto com exatamente as configurações que você definiu para ela.
 
-### 📦 Download em lote via ZIP (restaurado)
-O botão "Baixar todas" agora gera um arquivo ZIP com todas as fotos processadas — mais confiável do que downloads individuais em sequência, especialmente no macOS e Safari.
+### 🖼️ Export em PNG além de JPEG
+Dois botões aparecem antes do campo de nome do arquivo — JPEG (padrão) e PNG. A escolha vale tanto para o download individual quanto para o ZIP do batch.
 
-### ✍️ Assinatura aparece corretamente no overlay
-O campo de assinatura agora é exibido corretamente como pill discreto sobre a imagem, logo antes da marca "frameta.vercel.app".
+### 🏠 Logo leva para o início
+Clicar na logo "frameta" no cabeçalho recarrega a aplicação, voltando para a tela inicial.
+
+### 🔢 Versão no cabeçalho
+O número de versão atual aparece discretamente ao lado da logo para referência rápida.
+
+---
+
+## Versão 0.9.3 (19 de abril de 2026)
+
+### 🔧 Canvas interativo restaurado
+O arraste da imagem e o slider de zoom voltaram a funcionar corretamente após uma reescrita anterior que havia removido essas funções.
+
+### 📌 Pills alinhados pelo canto
+Os campos de dados agora se alinham corretamente pelo canto escolhido — canto direito ancora pela borda direita, canto esquerdo pela borda esquerda.
+
+### 📱 Bottom sheet mobile refatorado
+O painel de configurações no celular ganhou bordas arredondadas, animação mais suave e handle de arraste mais visível.
+
+---
+
+## Versão 0.9.0–0.9.2 (19 de abril de 2026)
+
+### 🖱️ Arraste a imagem dentro do recorte
+Ao escolher um formato de saída (1:1, 4:5, 9:16 etc.), você pode arrastar a imagem para enquadrar exatamente o que quer mostrar. Um slider de zoom (100%–300%) e um botão de reset completam o controle.
+
+### 📐 Posições contextuais
+O Overlay mostra 4 opções de canto (↖ ↗ ↙ ↘). Os estilos Branco e Escuro mostram topo ou base (↑ ↓). Os botões mudam automaticamente ao trocar de estilo.
+
+### 📅 Data como primeiro campo
+O campo de data agora aparece habilitado e em primeiro lugar por padrão.
+
+### 📏 Novo formato 3:4 Portrait
+Adicionado ao lado do 4:5 Portrait — útil para proporções padrão de câmera.
 
 ---
 
@@ -36,9 +68,6 @@ A interface acompanha a preferência do seu sistema operacional automaticamente.
 
 ### 🎨 Opacidade da barra
 Nos estilos Branco e Escuro, um slider controla a transparência da barra — sem alterar a proporção da imagem.
-
-### 📐 Proporção preservada
-Corrigimos um bug em que os estilos Branco e Escuro adicionavam espaço extra à imagem. Agora a barra é sempre sobreposta sobre a foto.
 
 ---
 
@@ -63,8 +92,8 @@ Corrigimos um bug em que os estilos Branco e Escuro adicionavam espaço extra à
 
 ## O que vem por aí
 
-- **Reposicionamento da imagem no canvas** ao mudar o formato de saída
 - **Compartilhamento direto** para Instagram, WhatsApp e outras redes
+- **Upload de logo própria** no overlay
 - **App mobile** (iOS e Android)
 - **Plugin para Lightroom**
 

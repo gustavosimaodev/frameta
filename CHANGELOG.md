@@ -15,7 +15,6 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 - [ ] Upload de logo própria no overlay
 - [ ] Color picker para cores dos pills
 - [ ] Salvar preferências no localStorage
-- [ ] Export em PNG além de JPEG
 - [ ] PWA — instalável como app no desktop e mobile
 
 ### Mobile
@@ -30,8 +29,27 @@ Formato: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) — [Semantic 
 - [ ] Analytics privacy-first (Plausible)
 
 ### Bugs conhecidos (revisão futura)
-- [ ] EXIF independente por foto no batch mode
 - [ ] Downloads individuais múltiplos bloqueados no macOS/Safari (workaround: ZIP)
+
+---
+
+## [0.9.4] — 2026-04-21
+
+Configurações independentes por foto no batch, export PNG e melhorias de interface.
+
+### Added
+- **Config independente por foto no batch:** cada foto mantém seu próprio estilo, posição, formato, zoom, offset e visibilidade de campos — ao navegar no filmstrip a interface sincroniza automaticamente
+- `snapshotConfig()` — captura um snapshot completo das configurações atuais
+- `applyConfig(cfg)` — restaura state e sincroniza todos os controles da UI (botões, sliders, toggles, ordem)
+- **Export PNG:** seletor JPEG / PNG antes do campo de nome de arquivo; exportação individual e em ZIP respeitam o formato escolhido por foto
+- **Logo clicável:** logo no header redireciona para o início da aplicação
+- **Versão no header:** número de versão exibido discretamente ao lado da logo
+
+### Fixed
+- Loop do "Baixar todas" agora usa a config individual de cada foto em vez do estado global — cada foto do ZIP sai com seu próprio estilo e recorte
+
+### Changed
+- `exportFormat` incluído no snapshot de configuração de cada foto no batch
 
 ---
 

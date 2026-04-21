@@ -2,7 +2,7 @@
 
 > Adicione os dados técnicos das suas fotos como overlay tipográfico diretamente sobre a imagem, pronto para Instagram e outras redes sociais.
 
-![Version](https://img.shields.io/badge/version-0.9.3-0d0d0d)
+![Version](https://img.shields.io/badge/version-0.9.4-0d0d0d)
 ![Status](https://img.shields.io/badge/status-beta-c8a96e)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -32,11 +32,11 @@ O Frameta lê automaticamente os metadados EXIF gravados pela câmera (câmera, 
 - Visibilidade e ordem dos campos personalizáveis (drag-and-drop)
 - Campo de assinatura livre (nome, perfil de rede social, copyright)
 - Escolha do nome do arquivo ao salvar
-- **Batch mode:** múltiplas fotos com filmstrip, exportação em ZIP
+- **Export JPEG ou PNG** — seletor antes do nome do arquivo
+- **Batch mode:** múltiplas fotos com filmstrip; cada foto mantém suas próprias configurações de estilo, posição, zoom e visibilidade; exportação em ZIP
 - 3 opções de fonte: DM Sans, DM Mono, Serif
 - Tema claro / escuro / sistema
 - Responsivo — desktop e mobile (bottom sheet)
-- Export JPEG 95%
 
 ---
 
@@ -89,6 +89,12 @@ Cada pill se ajusta à largura do seu conteúdo. O bloco inteiro se ancora no ca
 
 - **Cantos esquerdos (↖ ↙)** — pills crescem para a direita a partir da borda esquerda
 - **Cantos direitos (↗ ↘)** — pills crescem para a esquerda a partir da borda direita
+
+---
+
+## Batch mode — configurações por foto
+
+No modo batch cada foto armazena um snapshot independente de todas as configurações. Ao navegar no filmstrip a interface sincroniza automaticamente estilo, posição, formato, zoom, offset e visibilidade dos campos. O "Baixar todas" exporta cada foto com sua própria configuração.
 
 ---
 

@@ -72,7 +72,24 @@ html, body {
   z-index: 100;
 }
 
-.header-brand { display: flex; align-items: center; gap: 8px; }
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-sm);
+  transition: opacity var(--transition);
+}
+.header-brand:hover { opacity: 0.72; }
+
+.header-version {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--ink-4);
+  letter-spacing: 0.06em;
+  margin-left: 2px;
+}
 
 .brand-mark { color: var(--ink); display: flex; align-items: center; }
 
@@ -673,6 +690,30 @@ input:checked + .toggle-slider::before { transform: translateX(12px); }
 
 #mainCanvas.draggable { cursor: grab; }
 #mainCanvas.dragging  { cursor: grabbing; }
+
+/* --- SELETOR DE FORMATO DE EXPORT -------------------- */
+.export-format-row {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.fmt-type-btn {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid var(--paper-3);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+.fmt-type-btn.active {
+  background: var(--ink);
+  color: var(--white);
+  border-color: var(--ink);
+}
 
 /* --- RESPONSIVIDADE MOBILE — sem rolagem, tudo acessível ---- */
 @media (max-width: 768px) {

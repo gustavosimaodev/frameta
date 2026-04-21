@@ -24,18 +24,19 @@
       date:     true,
     },
     order:       ['date','camera','lens','shutter','aperture','iso','focal'],
-    style:       'overlay',
-    overlaySize: 'md',
-    fontScale:   1.0,
-    imgOffset:   { x: 0, y: 0 },
-    imgZoom:     1.0,
-    barOpacity:  1.0,
-    signature:   '',
-    batch:       [],
-    batchIndex:  0,
-    pos:         'bl',
-    fmt:         'original',
-    font:        'sans',
+    style:        'overlay',
+    overlaySize:  'md',
+    fontScale:    1.0,
+    imgOffset:    { x: 0, y: 0 },
+    imgZoom:      1.0,
+    barOpacity:   1.0,
+    signature:    '',
+    exportFormat: 'jpeg',
+    batch:        [],
+    batchIndex:   0,
+    pos:          'bl',
+    fmt:          'original',
+    font:         'sans',
   };
 
   /* -------------------------------------------------------
@@ -264,6 +265,15 @@
     });
   }
 
+  document.querySelectorAll('.fmt-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.fmt-type-btn').forEach(b =>
+        b.classList.remove('active'));
+      btn.classList.add('active');
+      state.exportFormat = btn.dataset.fmt;
+    });
+  });
+
   /* -------------------------------------------------------
      COLAPSÁVEL — campos e ordem
   ------------------------------------------------------- */
@@ -469,6 +479,7 @@
         fields:   safeFields,
         result:   safeResult,
         filename: file.name.replace(/\.[^.]+$/, ''),
+        config:   snapshotConfig(),
       });
     }
 
@@ -510,6 +521,94 @@
     state.batchIndex = 0;
   }
 
+  function snapshotConfig() {
+    return {
+      style:        state.style,
+      pos:          state.pos,
+      fmt:          state.fmt,
+      font:         state.font,
+      fontScale:    state.fontScale,
+      barOpacity:   state.barOpacity,
+      signature:    state.signature,
+      imgOffset:    { x: (state.imgOffset || {x:0}).x, y: (state.imgOffset || {y:0}).y },
+      imgZoom:      state.imgZoom || 1.0,
+      exportFormat: state.exportFormat || 'jpeg',
+      visible:      JSON.parse(JSON.stringify(state.visible)),
+      order:        [...state.order],
+    };
+  }
+
+  function applyConfig(cfg) {
+    if (!cfg) return;
+
+    state.style      = cfg.style;
+    state.pos        = cfg.pos;
+    state.fmt        = cfg.fmt;
+    state.font       = cfg.font;
+    state.fontScale  = cfg.fontScale;
+    state.barOpacity = cfg.barOpacity;
+    state.signature  = cfg.signature;
+    state.imgOffset  = { x: cfg.imgOffset.x, y: cfg.imgOffset.y };
+    state.imgZoom    = cfg.imgZoom;
+    state.visible    = JSON.parse(JSON.stringify(cfg.visible));
+    state.order      = [...cfg.order];
+
+    document.querySelectorAll('#styleGroup [data-value]').forEach(b => {
+      b.classList.toggle('active', b.dataset.value === cfg.style);
+    });
+
+    document.querySelectorAll('#posGroupOverlay [data-value]').forEach(b => {
+      b.classList.toggle('active', b.dataset.value === cfg.pos);
+    });
+    document.querySelectorAll('#posGroupSolid [data-value]').forEach(b => {
+      b.classList.toggle('active', b.dataset.value === cfg.pos);
+    });
+
+    document.querySelectorAll('#fmtGroup [data-value]').forEach(b => {
+      b.classList.toggle('active', b.dataset.value === cfg.fmt);
+    });
+
+    document.querySelectorAll('#fontGroup [data-value]').forEach(b => {
+      b.classList.toggle('active', b.dataset.value === cfg.font);
+    });
+
+    const fontSizeSlider = $('fontSizeSlider');
+    const fontSizeVal    = $('fontSizeVal');
+    if (fontSizeSlider) fontSizeSlider.value = Math.round(cfg.fontScale * 100);
+    if (fontSizeVal)    fontSizeVal.textContent = Math.round(cfg.fontScale * 100) + '%';
+
+    const opacitySlider = $('opacitySlider');
+    const opacityVal    = $('opacityVal');
+    if (opacitySlider) opacitySlider.value = Math.round(cfg.barOpacity * 100);
+    if (opacityVal)    opacityVal.textContent = Math.round(cfg.barOpacity * 100) + '%';
+
+    const zoomSlider = $('zoomSlider');
+    const zoomVal    = $('zoomVal');
+    if (zoomSlider) zoomSlider.value = Math.round(cfg.imgZoom * 100);
+    if (zoomVal)    zoomVal.textContent = Math.round(cfg.imgZoom * 100) + '%';
+
+    const sigInput = $('signatureInput');
+    if (sigInput) sigInput.value = cfg.signature || '';
+
+    document.querySelectorAll('.field-toggle').forEach(chk => {
+      const key = chk.dataset.field;
+      if (key && cfg.visible[key] !== undefined) {
+        chk.checked = cfg.visible[key];
+      }
+    });
+
+    const list = $('orderList');
+    if (list && cfg.order.length) {
+      const items = Array.from(list.querySelectorAll('.order-item'));
+      cfg.order.forEach((key) => {
+        const el = items.find(li => li.dataset.key === key);
+        if (el) list.appendChild(el);
+      });
+    }
+
+    updateStyleUI();
+  }
+
   function updateBatchCounter() {
     const el = $('batchCounter');
     if (el) el.textContent = (state.batchIndex + 1) + ' / ' + state.batch.length;
@@ -537,14 +636,21 @@
 
   function activateBatchItem(index) {
     if (index < 0 || index >= state.batch.length) return;
+
+    // Salva config da foto anterior antes de trocar
+    if (state.batch[state.batchIndex] && state.batchIndex !== index) {
+      state.batch[state.batchIndex].config = snapshotConfig();
+    }
+
     state.batchIndex = index;
     const item = state.batch[index];
 
     // Atualiza estado global com dados desta foto
-    state.img       = item.img;
-    state.fields    = item.fields;
-    state.imgOffset = { x: 0, y: 0 };
-    state.imgZoom   = 1.0;
+    state.img    = item.img;
+    state.fields = item.fields;
+
+    // Restaura config desta foto
+    applyConfig(item.config);
 
     // Atualiza campo de nome do arquivo
     const fi = $('filenameInput');
@@ -680,13 +786,19 @@
     if (!state.img) return;
     exportBtn.disabled = true;
     showToast('Preparando download…');
+    const isPng     = state.exportFormat === 'png';
+    const mimeType  = isPng ? 'image/png' : 'image/jpeg';
+    const quality   = isPng ? undefined : 0.95;
+    const extension = isPng ? '.png' : '.jpg';
+
     mainCanvas.toBlob(blob => {
       const filenameInput = $('filenameInput');
       const rawName  = filenameInput ? filenameInput.value.trim() : '';
       const safeName = rawName
         ? rawName.replace(/[^a-zA-Z0-9_\-\. ]/g, '').replace(/\s+/g, '_')
         : 'frameta_' + Date.now();
-      const filename = safeName.endsWith('.jpg') ? safeName : safeName + '.jpg';
+      const base     = safeName.replace(/\.(jpg|jpeg|png)$/i, '');
+      const filename = base + extension;
       const url = URL.createObjectURL(blob);
       const a   = document.createElement('a');
       a.href     = url;
@@ -698,7 +810,7 @@
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       exportBtn.disabled = false;
       showToast('Download iniciado!');
-    }, 'image/jpeg', 0.95);
+    }, mimeType, quality);
   });
 
   /* -------------------------------------------------------
@@ -729,24 +841,33 @@
 
       for (let i = 0; i < state.batch.length; i++) {
         const item = state.batch[i];
+        // Salva config da foto ativa antes de processar
+        if (i === state.batchIndex) item.config = snapshotConfig();
+        const cfg = item.config || snapshotConfig();
         showToast('Processando ' + (i + 1) + ' de ' + state.batch.length + '…');
 
-        // Renderiza esta foto com as configurações globais atuais
+        // Renderiza com a config individual de cada foto
         window.FrametaRender.draw(mainCanvas, item.img, item.fields, {
-          style:       state.style,
-          pos:         state.pos,
-          fmt:         state.fmt,
-          font:        state.font,
-          overlaySize: state.overlaySize,
-          fontScale:   state.fontScale,
-          barOpacity:  state.barOpacity,
-          signature:   state.signature,
-          order:       state.order,
-          visible:     state.visible,
+          style:       cfg.style,
+          pos:         cfg.pos,
+          fmt:         cfg.fmt,
+          font:        cfg.font,
+          overlaySize: 'md',
+          fontScale:   cfg.fontScale,
+          barOpacity:  cfg.barOpacity,
+          signature:   cfg.signature,
+          imgOffset:   cfg.imgOffset || { x: 0, y: 0 },
+          imgZoom:     cfg.imgZoom || 1.0,
+          order:       cfg.order,
+          visible:     cfg.visible,
         });
 
-        const blob = await new Promise(res => mainCanvas.toBlob(res, 'image/jpeg', 0.95));
-        const name = (item.filename || ('frameta_' + (i + 1))) + '.jpg';
+        const isPng = (cfg.exportFormat || 'jpeg') === 'png';
+        const mime  = isPng ? 'image/png' : 'image/jpeg';
+        const qual  = isPng ? undefined : 0.95;
+        const ext   = isPng ? '.png' : '.jpg';
+        const blob  = await new Promise(res => mainCanvas.toBlob(res, mime, qual));
+        const name  = (item.filename || ('frameta_' + (i + 1))) + ext;
         zip.file(name, blob);
       }
 
