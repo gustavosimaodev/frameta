@@ -3,7 +3,63 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Frameta — EXIF Watermark</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0XZPLGGXKD"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-0XZPLGGXKD');
+  </script>
+
+  <!-- SEO básico -->
+  <title>Frameta — EXIF Watermark para Fotógrafos</title>
+  <meta name="description" content="Adicione os dados técnicos das suas fotos (câmera, lente, ISO, abertura, velocidade) como overlay diretamente sobre a imagem. Gratuito, sem cadastro, tudo no navegador." />
+  <meta name="keywords" content="EXIF watermark, dados exif foto, overlay fotografia, metadados fotografia, exif instagram, frameta" />
+  <meta name="author" content="Gustavo de Morais Simão" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://frameta.vercel.app/" />
+
+  <!-- Open Graph (Facebook, WhatsApp, LinkedIn) -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://frameta.vercel.app/" />
+  <meta property="og:title" content="Frameta — EXIF Watermark para Fotógrafos" />
+  <meta property="og:description" content="Coloque os dados técnicos das suas fotos diretamente sobre a imagem. Câmera, lente, ISO, abertura e velocidade em segundos. Gratuito e sem cadastro." />
+  <meta property="og:image" content="https://frameta.vercel.app/og-image.jpg" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:site_name" content="Frameta" />
+
+  <!-- Twitter Card (X) -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content="https://frameta.vercel.app/" />
+  <meta name="twitter:title" content="Frameta — EXIF Watermark para Fotógrafos" />
+  <meta name="twitter:description" content="Coloque os dados técnicos das suas fotos diretamente sobre a imagem. Gratuito e sem cadastro." />
+  <meta name="twitter:image" content="https://frameta.vercel.app/og-image.jpg" />
+
+  <!-- Schema.org — SoftwareApplication -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Frameta",
+    "description": "Ferramenta gratuita que lê dados EXIF de fotos JPEG e os renderiza como overlay tipográfico diretamente sobre a imagem.",
+    "url": "https://frameta.vercel.app",
+    "applicationCategory": "PhotosApp",
+    "operatingSystem": "Web",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "BRL"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Gustavo de Morais Simão",
+      "url": "https://instagram.com/gsimao14"
+    }
+  }
+  </script>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet" />
@@ -12,22 +68,23 @@
 <body>
 
   <header class="header">
-    <a class="header-brand" href="/" title="Ir para o início">
-      <div class="brand-mark">
-        <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
-          <rect x="2" y="6" width="24" height="17" rx="3" stroke="currentColor" stroke-width="1.5"/>
-          <circle cx="14" cy="14.5" r="4.5" stroke="currentColor" stroke-width="1.5"/>
-          <circle cx="14" cy="14.5" r="2" fill="currentColor"/>
-          <rect x="9" y="3" width="10" height="4" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
-          <circle cx="21.5" cy="9.5" r="1" fill="currentColor"/>
-        </svg>
-      </div>
-      <div class="brand-text">
-        <span class="brand-name">frameta</span>
-        <span class="brand-tag">EXIF watermark</span>
-      </div>
-    </a>
-    <span class="header-version">v0.9.4</span>
+    <div class="header-brand">
+      <a href="https://frameta.vercel.app" class="brand-link" title="Ir para o início">
+        <div class="brand-mark">
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none">
+            <rect x="2" y="6" width="24" height="17" rx="3" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="14" cy="14.5" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="14" cy="14.5" r="2" fill="currentColor"/>
+            <rect x="9" y="3" width="10" height="4" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
+            <circle cx="21.5" cy="9.5" r="1" fill="currentColor"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-name">frameta</span>
+          <span class="brand-tag">EXIF watermark</span>
+        </div>
+      </a>
+    </div>
     <nav class="header-nav">
       <button class="nav-btn active" data-tab="editor">Editor</button>
       <button class="nav-btn" data-tab="about">Sobre</button>
@@ -35,6 +92,7 @@
     </nav>
     <div class="header-credit">
       by <a href="https://instagram.com/gsimao14" target="_blank" rel="noopener" class="credit-link">Gustavo de Morais Simão</a>
+      <span class="header-version">v0.9.4 · 19/04/2026</span>
     </div>
   </header>
 
@@ -42,6 +100,8 @@
   <div class="app" id="tabEditor">
 
     <aside class="sidebar" id="sidebar">
+
+      <!-- TOGGLE MOBILE -->
       <button class="sidebar-toggle" id="sidebarToggle">
         <span>Configurações</span>
         <span class="sidebar-toggle-icon">▾</span>
@@ -61,17 +121,7 @@
           <span class="upload-label">Abrir foto</span>
           <span class="upload-sub">JPEG · PNG · TIFF · WebP</span>
         </label>
-        <div class="export-format-row">
-          <button class="fmt-type-btn active" id="fmtTypeJpeg" data-fmt="jpeg">JPEG</button>
-          <button class="fmt-type-btn" id="fmtTypePng" data-fmt="png">PNG</button>
-        </div>
-        <input
-          type="text"
-          id="filenameInput"
-          class="filename-input"
-          placeholder="nome do arquivo"
-          maxlength="80"
-        />
+        <input type="text" id="filenameInput" class="filename-input" placeholder="nome do arquivo" maxlength="80" />
         <button class="export-btn" id="exportBtn" disabled>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
@@ -115,22 +165,20 @@
         </div>
       </section>
 
-      <!-- POSIÇÃO — muda conforme o estilo selecionado -->
+      <!-- POSIÇÃO — contextual por estilo -->
       <section class="sidebar-section" id="posSection">
         <div class="section-title">Posição</div>
-
-        <!-- Posições do Overlay — apenas 4 cantos -->
+        <!-- Overlay: 4 cantos -->
         <div class="pos-grid pos-grid--corners" id="posGroupOverlay">
-          <button class="pos-btn" data-value="tl" title="Superior esquerdo">↖</button>
-          <button class="pos-btn" data-value="tr" title="Superior direito">↗</button>
-          <button class="pos-btn active" data-value="bl" title="Inferior esquerdo">↙</button>
-          <button class="pos-btn" data-value="br" title="Inferior direito">↘</button>
+          <button class="pos-btn" data-value="tl">↖</button>
+          <button class="pos-btn" data-value="tr">↗</button>
+          <button class="pos-btn active" data-value="bl">↙</button>
+          <button class="pos-btn" data-value="br">↘</button>
         </div>
-
-        <!-- Posições do modo Sólido — apenas topo/base -->
+        <!-- Sólido: topo / base -->
         <div class="pos-grid pos-grid--bars" id="posGroupSolid" style="display:none">
-          <button class="pos-btn" data-value="tc" title="Topo">↑</button>
-          <button class="pos-btn active" data-value="bc" title="Base">↓</button>
+          <button class="pos-btn" data-value="tc">↑ Topo</button>
+          <button class="pos-btn active" data-value="bc">↓ Base</button>
         </div>
       </section>
 
@@ -160,13 +208,7 @@
       <!-- ASSINATURA -->
       <section class="sidebar-section">
         <div class="section-title">Assinatura</div>
-        <input
-          type="text"
-          id="signatureInput"
-          class="signature-input"
-          placeholder="@seu_perfil · seu nome · © 2026"
-          maxlength="60"
-        />
+        <input type="text" id="signatureInput" class="signature-input" placeholder="@seu_perfil · seu nome · © 2026" maxlength="60" />
         <div class="signature-hint">Aparece ao final do overlay</div>
       </section>
 
@@ -183,6 +225,7 @@
     </aside>
 
     <div class="app-column">
+
       <!-- WORKSPACE -->
       <main class="workspace" id="workspace">
         <div class="drop-overlay" id="dropOverlay">
@@ -195,7 +238,7 @@
           </div>
         </div>
 
-        <!-- Controles do canvas interativo -->
+        <!-- Hint de reposicionamento + zoom -->
         <div class="reposition-hint" id="repositionHint" style="display:none">
           <div class="reposition-top">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -235,12 +278,14 @@
         </div>
       </main>
 
+      <!-- FILMSTRIP -->
       <div class="filmstrip" id="filmstrip" style="display:none">
         <button class="filmstrip-nav" id="filmPrev">‹</button>
         <div class="filmstrip-track" id="filmstripTrack"></div>
         <div class="batch-counter" id="batchCounter"></div>
         <button class="filmstrip-nav" id="filmNext">›</button>
       </div>
+
     </div>
 
     <!-- PAINEL EXIF -->
@@ -256,7 +301,7 @@
         <pre id="debugPre" style="font-size:9px;font-family:'DM Mono',monospace;color:#787878;margin-top:8px;white-space:pre-wrap;word-break:break-all;line-height:1.5;max-height:300px;overflow-y:auto"></pre>
       </details>
 
-      <!-- CAMPOS + ORDEM no painel direito -->
+      <!-- CAMPOS + ORDEM -->
       <div style="margin-top:20px">
         <button class="collapsible-header" id="fieldsToggle">
           <span class="section-title" style="margin:0">Campos e ordem</span>
@@ -342,7 +387,6 @@
         </div>
       </div>
 
-      <!-- FALE CONOSCO -->
       <div class="about-contact">
         <div class="about-section-title">Fale conosco</div>
         <div class="contact-links">
