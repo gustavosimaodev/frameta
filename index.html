@@ -93,7 +93,7 @@
     </nav>
     <div class="header-credit">
       by <a href="https://instagram.com/gsimao14" target="_blank" rel="noopener" class="credit-link">Gustavo de Morais Simão</a>
-      <span class="header-version">v0.9.4 · 19/04/2026</span>
+      <span class="header-version">v0.9.5 · 23/04/2026</span>
     </div>
   </header>
 
@@ -225,6 +225,105 @@
 
     </aside>
 
+    <!-- BOTTOM NAV — mobile only -->
+    <nav class="bottom-nav" id="bottomNav">
+      <button class="bn-item active" data-panel="style">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>
+        </svg>
+        <span>Estilo</span>
+      </button>
+      <button class="bn-item" data-panel="format">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 3v18M16 3v18"/>
+        </svg>
+        <span>Formato</span>
+      </button>
+      <button class="bn-item bn-item--upload" data-panel="upload" id="bnUpload">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <rect x="3" y="3" width="18" height="18" rx="3"/>
+          <circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+          <rect x="9" y="0.5" width="6" height="3" rx="1.2"/>
+        </svg>
+        <span>Foto</span>
+      </button>
+      <button class="bn-item" data-panel="fields">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M4 6h16M4 12h10M4 18h6"/>
+        </svg>
+        <span>Campos</span>
+      </button>
+      <button class="bn-item" data-panel="download" id="bnDownload">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        <span>Baixar</span>
+      </button>
+    </nav>
+
+    <!-- PAINÉIS MOBILE -->
+    <div class="mobile-panel" id="mobilePanelStyle" style="display:none">
+      <div class="mp-inner">
+        <div class="section-title">Estilo</div>
+        <div class="option-group" id="styleGroupMobile">
+          <button class="opt-btn active" data-value="overlay">Overlay</button>
+          <button class="opt-btn" data-value="white">Branco</button>
+          <button class="opt-btn" data-value="dark">Escuro</button>
+        </div>
+        <div class="section-title" style="margin-top:12px">Posição</div>
+        <div class="pos-grid pos-grid--corners" id="posGroupOverlayMobile">
+          <button class="pos-btn" data-value="tl">↖</button>
+          <button class="pos-btn" data-value="tr">↗</button>
+          <button class="pos-btn active" data-value="bl">↙</button>
+          <button class="pos-btn" data-value="br">↘</button>
+        </div>
+        <div class="section-title" style="margin-top:12px">Tamanho</div>
+        <div class="font-size-row">
+          <span class="font-size-label">Fonte</span>
+          <input type="range" id="fontSizeSliderMobile" min="60" max="160" value="100" step="5"/>
+          <span class="font-size-val" id="fontSizeValMobile">100%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-panel" id="mobilePanelFormat" style="display:none">
+      <div class="mp-inner">
+        <div class="section-title">Formato</div>
+        <div class="fmt-grid" id="fmtGroupMobile">
+          <button class="fmt-btn active" data-value="original">Original</button>
+          <button class="fmt-btn" data-value="1:1">1:1 <small>Feed</small></button>
+          <button class="fmt-btn" data-value="4:5">4:5 <small>Portrait</small></button>
+          <button class="fmt-btn" data-value="3:4">3:4 <small>Portrait</small></button>
+          <button class="fmt-btn" data-value="9:16">9:16 <small>Story</small></button>
+          <button class="fmt-btn" data-value="16:9">16:9 <small>Wide</small></button>
+        </div>
+        <div class="section-title" style="margin-top:12px">Fonte</div>
+        <div class="option-group" id="fontGroupMobile">
+          <button class="opt-btn active" data-value="sans">Sans</button>
+          <button class="opt-btn" data-value="mono">Mono</button>
+          <button class="opt-btn" data-value="serif">Serif</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-panel" id="mobilePanelFields" style="display:none">
+      <div class="mp-inner">
+        <div class="section-title">Campos e ordem</div>
+        <ul class="order-list" id="orderListMobile">
+          <li class="order-item" data-key="date"><span class="drag-handle">⠿</span><span class="order-label">Data</span><label class="toggle-wrap" style="margin-left:auto"><input type="checkbox" data-field="date" checked class="field-toggle-mobile"/><span class="toggle-slider"></span></label></li>
+          <li class="order-item" data-key="camera"><span class="drag-handle">⠿</span><span class="order-label">Câmera</span><label class="toggle-wrap" style="margin-left:auto"><input type="checkbox" data-field="camera" checked class="field-toggle-mobile"/><span class="toggle-slider"></span></label></li>
+          <li class="order-item" data-key="lens"><span class="drag-handle">⠿</span><span class="order-label">Lente</span><label class="toggle-wrap" style="margin-left:auto"><input type="checkbox" data-field="lens" checked class="field-toggle-mobile"/><span class="toggle-slider"></span></label></li>
+          <li class="order-item" data-key="shutter"><span class="drag-handle">⠿</span><span class="order-label">Velocidade</span><label class="toggle-wrap" style="margin-left:auto"><input type="checkbox" data-field="shutter" checked class="field-toggle-mobile"/><span class="toggle-slider"></span></label></li>
+          <li class="order-item" data-key="aperture"><span class="drag-handle">⠿</span><span class="order-label">Abertura</span><label class="toggle-wrap" style="margin-left:auto"><input type="checkbox" data-field="aperture" checked class="field-toggle-mobile"/><span class="toggle-slider"></span></label></li>
+          <li class="order-item" data-key="iso"><span class="drag-handle">⠿</span><span class="order-label">ISO</span><label class="toggle-wrap" style="margin-left:auto"><input type="checkbox" data-field="iso" checked class="field-toggle-mobile"/><span class="toggle-slider"></span></label></li>
+          <li class="order-item" data-key="focal"><span class="drag-handle">⠿</span><span class="order-label">Focal</span><label class="toggle-wrap" style="margin-left:auto"><input type="checkbox" data-field="focal" checked class="field-toggle-mobile"/><span class="toggle-slider"></span></label></li>
+        </ul>
+        <div class="section-title" style="margin-top:12px">Assinatura</div>
+        <input type="text" id="signatureInputMobile" class="signature-input" placeholder="@seu_perfil · © 2026" maxlength="60"/>
+      </div>
+    </div>
+
     <div class="app-column">
 
       <!-- WORKSPACE -->
@@ -278,6 +377,14 @@
           <canvas id="mainCanvas"></canvas>
         </div>
       </main>
+
+      <div class="batch-toolbar" id="batchToolbar" style="display:none">
+        <div class="batch-mode-toggle">
+          <button class="bmt-btn active" id="batchModeIndividual" title="Cada foto com sua própria configuração">Individual</button>
+          <button class="bmt-btn" id="batchModeGlobal" title="Todas as fotos compartilham a mesma configuração">Global</button>
+        </div>
+        <button class="batch-apply-all" id="batchApplyAll" title="Copia a configuração atual para todas as fotos">Aplicar a todas</button>
+      </div>
 
       <!-- FILMSTRIP -->
       <div class="filmstrip" id="filmstrip" style="display:none">

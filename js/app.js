@@ -34,6 +34,7 @@
     exportFormat: 'jpeg',
     batch:        [],
     batchIndex:   0,
+    batchMode:    'individual',
     pos:          'bl',
     fmt:          'original',
     font:         'sans',
@@ -503,6 +504,8 @@
     if (exportAllBtn)   exportAllBtn.style.display = 'flex';
     if (batchCounter)   batchCounter.classList.add('visible');
     if (exportBtnLabel) exportBtnLabel.textContent = 'Baixar atual';
+    const batchToolbar = $('batchToolbar');
+    if (batchToolbar) batchToolbar.style.display = 'flex';
     updateBatchCounter();
   }
 
@@ -515,10 +518,57 @@
     if (exportAllBtn)   exportAllBtn.style.display = 'none';
     if (batchCounter)   batchCounter.classList.remove('visible');
     if (exportBtnLabel) exportBtnLabel.textContent = 'Baixar foto';
+    const batchToolbar = $('batchToolbar');
+    if (batchToolbar) batchToolbar.style.display = 'none';
+    state.batchMode = 'individual';
+    if ($('batchModeIndividual')) $('batchModeIndividual').classList.add('active');
+    if ($('batchModeGlobal'))     $('batchModeGlobal').classList.remove('active');
     // Libera memória
     state.batch.forEach(item => { if (item.blobUrl) URL.revokeObjectURL(item.blobUrl); });
     state.batch      = [];
     state.batchIndex = 0;
+  }
+
+  /* -------------------------------------------------------
+     BATCH MODE — Individual / Global
+  ------------------------------------------------------- */
+  function applyConfigToAll() {
+    const current = snapshotConfig();
+    state.batch.forEach((item, i) => {
+      if (i !== state.batchIndex) {
+        item.config = JSON.parse(JSON.stringify(current));
+      }
+    });
+    showToast('Configuração aplicada a todas as fotos.');
+  }
+
+  const batchModeIndividual = $('batchModeIndividual');
+  const batchModeGlobal     = $('batchModeGlobal');
+  const batchApplyAll       = $('batchApplyAll');
+
+  if (batchModeIndividual) {
+    batchModeIndividual.addEventListener('click', () => {
+      state.batchMode = 'individual';
+      batchModeIndividual.classList.add('active');
+      batchModeGlobal.classList.remove('active');
+      showToast('Modo individual: cada foto com sua própria configuração.');
+    });
+  }
+
+  if (batchModeGlobal) {
+    batchModeGlobal.addEventListener('click', () => {
+      state.batchMode = 'global';
+      batchModeGlobal.classList.add('active');
+      batchModeIndividual.classList.remove('active');
+      applyConfigToAll();
+      showToast('Modo global ativo: alterações se aplicam a todas as fotos.');
+    });
+  }
+
+  if (batchApplyAll) {
+    batchApplyAll.addEventListener('click', () => {
+      applyConfigToAll();
+    });
   }
 
   function snapshotConfig() {
@@ -776,6 +826,15 @@
       order:       state.order,
       visible:     state.visible,
     });
+    // Modo global: propaga config para todas as fotos do batch
+    if (state.batchMode === 'global' && state.batch.length > 0) {
+      const current = snapshotConfig();
+      state.batch.forEach((item, i) => {
+        if (i !== state.batchIndex) {
+          item.config = JSON.parse(JSON.stringify(current));
+        }
+      });
+    }
     updateRepositionHint();
   }
 
@@ -904,6 +963,135 @@
   if (filmNext) filmNext.addEventListener('click', () => {
     if (state.batchIndex < state.batch.length - 1) activateBatchItem(state.batchIndex + 1);
   });
+
+  /* -------------------------------------------------------
+     BOTTOM NAV — mobile
+  ------------------------------------------------------- */
+  (function initBottomNav() {
+    if (window.innerWidth > 768) return;
+
+    const panels = {
+      style:  $('mobilePanelStyle'),
+      format: $('mobilePanelFormat'),
+      fields: $('mobilePanelFields'),
+    };
+
+    let activePanel = null;
+
+    function setupMobileGroup(mobileGroupId, stateKey, callback) {
+      const group = $(mobileGroupId);
+      if (!group) return;
+      group.querySelectorAll('[data-value]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          group.querySelectorAll('[data-value]').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const desktopGroup = stateKey === 'style' ? $('styleGroup')
+            : stateKey === 'fmt' ? $('fmtGroup')
+            : stateKey === 'font' ? $('fontGroup') : null;
+          if (desktopGroup) {
+            desktopGroup.querySelectorAll('[data-value]').forEach(b => {
+              b.classList.toggle('active', b.dataset.value === btn.dataset.value);
+            });
+          }
+          state[stateKey] = btn.dataset.value;
+          if (callback) callback();
+          render();
+        });
+      });
+    }
+
+    setupMobileGroup('styleGroupMobile', 'style', updateStyleUI);
+    setupMobileGroup('posGroupOverlayMobile', 'pos');
+    setupMobileGroup('fmtGroupMobile', 'fmt', () => {
+      state.imgOffset = { x: 0, y: 0 };
+      state.imgZoom   = 1.0;
+      updateRepositionHint();
+    });
+    setupMobileGroup('fontGroupMobile', 'font');
+
+    const fsMobile  = $('fontSizeSliderMobile');
+    const fsvMobile = $('fontSizeValMobile');
+    if (fsMobile) {
+      fsMobile.addEventListener('input', () => {
+        const pct = parseInt(fsMobile.value);
+        state.fontScale   = pct / 100;
+        state.overlaySize = pct <= 80 ? 'sm' : pct <= 120 ? 'md' : 'lg';
+        if (fsvMobile) fsvMobile.textContent = pct + '%';
+        const fsDesktop  = $('fontSizeSlider');
+        const fsvDesktop = $('fontSizeVal');
+        if (fsDesktop)  fsDesktop.value = pct;
+        if (fsvDesktop) fsvDesktop.textContent = pct + '%';
+        render();
+      });
+    }
+
+    document.querySelectorAll('.field-toggle-mobile').forEach(chk => {
+      chk.addEventListener('change', () => {
+        state.visible[chk.dataset.field] = chk.checked;
+        const desktopChk = document.querySelector(`.field-toggle[data-field="${chk.dataset.field}"]`);
+        if (desktopChk) desktopChk.checked = chk.checked;
+        render();
+      });
+    });
+
+    const sigMobile = $('signatureInputMobile');
+    if (sigMobile) {
+      sigMobile.addEventListener('input', () => {
+        state.signature = sigMobile.value.trim();
+        const sigDesktop = $('signatureInput');
+        if (sigDesktop) sigDesktop.value = sigMobile.value;
+        render();
+      });
+    }
+
+    const bnUpload = $('bnUpload');
+    if (bnUpload) {
+      bnUpload.addEventListener('click', () => {
+        fileInput.click();
+        closeAllPanels();
+        document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+      });
+    }
+
+    const bnDownload = $('bnDownload');
+    if (bnDownload) {
+      bnDownload.addEventListener('click', () => {
+        if (!state.img) { showToast('Carregue uma foto primeiro.'); return; }
+        exportBtn.click();
+        closeAllPanels();
+        document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+      });
+    }
+
+    function closeAllPanels() {
+      Object.values(panels).forEach(p => { if (p) p.style.display = 'none'; });
+      activePanel = null;
+    }
+
+    document.querySelectorAll('.bn-item[data-panel]').forEach(btn => {
+      const panelKey = btn.dataset.panel;
+      if (!panels[panelKey]) return;
+      btn.addEventListener('click', () => {
+        const panel  = panels[panelKey];
+        const isOpen = activePanel === panelKey;
+        closeAllPanels();
+        document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+        if (!isOpen) {
+          panel.style.display = 'block';
+          activePanel = panelKey;
+          btn.classList.add('active');
+        }
+      });
+    });
+
+    const ws = $('workspace');
+    if (ws) ws.addEventListener('click', e => {
+      if (!e.target.closest('.mobile-panel') && !e.target.closest('.bottom-nav')) {
+        closeAllPanels();
+        document.querySelectorAll('.bn-item').forEach(b => b.classList.remove('active'));
+      }
+    });
+  })();
 
   /* -------------------------------------------------------
      TOAST
