@@ -968,7 +968,7 @@
      BOTTOM NAV — mobile
   ------------------------------------------------------- */
   (function initBottomNav() {
-    if (window.innerWidth > 768) return;
+    // Sempre registra os listeners — o CSS controla visibilidade
 
     const panels = {
       style:  $('mobilePanelStyle'),
